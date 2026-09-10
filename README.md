@@ -2,7 +2,7 @@
 
 Cinema-grade recruiting funnel and application portal for CDL-A drivers, featuring scroll-driven scene scrubber hero sections, quick application flows, and multi-step qualification quizzes.
 
-Built with **TanStack Start**, **React 19**, **Vite**, **Tailwind CSS v4**, and designed for Cloudflare Workers / Railway deployments.
+Built with **TanStack Start**, **React 19**, **Vite**, **Tailwind CSS v4**, and configured for **Railway** and **Cloudflare Workers**.
 
 ---
 
@@ -26,17 +26,12 @@ Built with **TanStack Start**, **React 19**, **Vite**, **Tailwind CSS v4**, and 
 
 ## 💻 Local Development
 
-1. Navigate to the `app` directory:
-   ```bash
-   cd app
-   ```
-
-2. Install dependencies:
+1. Install dependencies:
    ```bash
    bun install
    ```
 
-3. Start the local development server:
+2. Start the local development server:
    ```bash
    bun run dev
    ```
@@ -45,9 +40,14 @@ Built with **TanStack Start**, **React 19**, **Vite**, **Tailwind CSS v4**, and 
    bun run dev:design
    ```
 
-4. Build for production:
+3. Build for production:
    ```bash
    bun run build
+   ```
+
+4. Preview production build locally:
+   ```bash
+   bun run preview
    ```
 
 ---
@@ -69,17 +69,17 @@ bunx wrangler d1 execute DB --remote --file=migrations/0001_leads.sql
 
 ## 🚢 Deployment
 
+### Railway (One-Click Deploy)
+This repository is configured with `railway.json` and `nixpacks.toml`:
+1. Connect this GitHub repository to Railway.
+2. Railway automatically detects Bun + Node and runs:
+   - **Build:** `bun install && bun run build`
+   - **Start:** `bun run preview` (Vite preview on `0.0.0.0:$PORT` with `allowedHosts: true`)
+
 ### Cloudflare Workers
-Deploy directly using Wrangler from the `app/` folder:
+Deploy directly using Wrangler:
 ```bash
-cd app
 bun run build
 bunx wrangler deploy
 ```
 *Make sure your `DB` D1 database binding is configured in Cloudflare / `wrangler.jsonc`.*
-
-### Railway
-To deploy on Railway:
-1. Connect this GitHub repository to a new Railway project.
-2. Set the root directory to `app` (or configure the build command `cd app && bun install && bun run build`).
-3. Set your start command and environment variables as needed.

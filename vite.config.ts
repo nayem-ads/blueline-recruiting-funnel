@@ -27,6 +27,10 @@ export default defineConfig(({ command, mode }) => {
     // Polling the watcher makes file changes reliably trigger HMR / SSR reload.
     server: {
       watch: { usePolling: true, interval: 150 },
+      allowedHosts: true,
+    },
+    preview: {
+      allowedHosts: true,
     },
     resolve: {
       tsconfigPaths: true,

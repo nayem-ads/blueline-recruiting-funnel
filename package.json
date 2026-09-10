@@ -9,9 +9,10 @@
   "scripts": {
     "dev": "vite dev",
     "dev:design": "HF_DESIGN_INSPECTOR=1 vite dev --mode design",
-    "build": "bun run check:ui && tsr generate && tsc --noEmit && vite build",
+    "build": "node scripts/check-ui.mjs && tsr generate && tsc --noEmit && vite build",
     "build:dev": "vite build --mode development",
-    "preview": "vite preview",
+    "start": "vite preview --host 0.0.0.0 --port ${PORT:-3000}",
+    "preview": "vite preview --host 0.0.0.0 --port ${PORT:-3000}",
     "postinstall": "node scripts/verify-install.mjs",
     "lint": "eslint .",
     "format": "prettier --write .",
