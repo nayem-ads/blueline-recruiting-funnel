@@ -7,11 +7,12 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "vite dev",
+    "dev": "vite dev --host 0.0.0.0 --port ${PORT:-3000}",
     "dev:design": "HF_DESIGN_INSPECTOR=1 vite dev --mode design",
     "build": "node scripts/check-ui.mjs && tsr generate && tsc --noEmit && vite build",
     "build:dev": "vite build --mode development",
-    "start": "vite preview --host 0.0.0.0 --port ${PORT:-3000}",
+    "build:cf": "CF_WORKER=1 bun run build",
+    "start": "vite dev --host 0.0.0.0 --port ${PORT:-3000}",
     "preview": "vite preview --host 0.0.0.0 --port ${PORT:-3000}",
     "postinstall": "node scripts/verify-install.mjs",
     "lint": "eslint .",
@@ -73,8 +74,5 @@
     "typescript-eslint": "^8.63.0",
     "vite": "^8.1.3",
     "vite-plugin-svgr": "^5.2.0"
-  },
-  "overrides": {
-    "@types/react": "19.2.15"
   }
 }
