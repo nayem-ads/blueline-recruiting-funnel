@@ -1,0 +1,30 @@
+CREATE TABLE IF NOT EXISTS leads (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  source TEXT NOT NULL,
+  first_name TEXT NOT NULL,
+  last_name TEXT,
+  phone TEXT NOT NULL,
+  email TEXT,
+  state TEXT,
+  city TEXT,
+  lane TEXT,
+  experience TEXT,
+  home_time TEXT,
+  matters TEXT,
+  sms_consent INTEGER NOT NULL DEFAULT 0,
+  consent_text TEXT,
+  utm_source TEXT,
+  utm_medium TEXT,
+  utm_campaign TEXT,
+  utm_content TEXT,
+  utm_term TEXT,
+  fbclid TEXT,
+  page_uri TEXT,
+  user_agent TEXT,
+  ip TEXT,
+  hubspot_status TEXT,
+  hubspot_error TEXT
+);
+CREATE INDEX IF NOT EXISTS leads_created_at ON leads (created_at);
+CREATE INDEX IF NOT EXISTS leads_phone ON leads (phone);
