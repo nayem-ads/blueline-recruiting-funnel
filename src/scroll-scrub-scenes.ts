@@ -16,10 +16,10 @@ export const scrollScrubScenes: ScrollScrubScene[] = [
   {
     id: "truck",
     label: "The truck",
-    kicker: "CDL-A drivers. 3 months experience is enough.",
-    title: "Brand new truck. 71¢ a mile. Home when you say.",
+    kicker: "CDL-A drivers with 2+ years OTR experience",
+    title: "71¢ a mile solo. 85 to 90¢ teams. Home when you say.",
     body: "Tell us what you want out of your next job once. We put it in front of carriers that fit, and a real recruiter calls you back in 5 minutes.",
-    tags: ["$10K a month", "Paid weekly", "100% free for drivers"],
+    tags: ["Well-maintained trucks", "Paid weekly", "100% free for drivers"],
     clip: "/assets/world/scene-01.mp4",
     poster: "/assets/world/scene-01-poster.jpg",
     mobileClip: "/assets/world/scene-01-mobile.mp4",

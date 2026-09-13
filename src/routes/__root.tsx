@@ -22,7 +22,7 @@ declare const __HF_DESIGN_INSPECTOR__: boolean;
 
 // Built-in defaults for any field that isn't set in app-meta.json.
 const DEFAULT_TITLE = "BlueLine Recruiting | CDL-A OTR Jobs";
-const DEFAULT_DESCRIPTION = "Brand new truck, 71 cents a mile, home when you say. Apply once, a real recruiter calls in 5 minutes. Free for drivers.";
+const DEFAULT_DESCRIPTION = "71 cents a mile solo, 85 to 90 cents for teams, home when you say. 2+ years OTR experience. Apply once, a real recruiter calls in 5 minutes. Free for drivers.";
 
 type AppMeta = {
   og_title?: string | null;

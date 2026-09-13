@@ -5,7 +5,9 @@ import { submitLead } from "@/lib/api/leads.functions";
 import { getAttribution } from "@/lib/tracking";
 import { CONSENT_TEXT } from "./chrome";
 
-export const EXPERIENCE_OPTIONS = ["Under 3 months", "3 to 12 months", "1 to 2 years", "2+ years"] as const;
+export const EXPERIENCE_OPTIONS = ["Under 2 years", "2 to 3 years", "3 to 5 years", "5+ years"] as const;
+export const UNDER_MIN = "Under 2 years";
+export const MIN_EXP_NOTE = "Right now our carriers need 2 years of verifiable CDL-A experience. If you are close, call us and we will tell you exactly when you qualify.";
 
 export function QuickForm({ compact = false }: { compact?: boolean }) {
   const navigate = useNavigate();
@@ -22,6 +24,7 @@ export function QuickForm({ compact = false }: { compact?: boolean }) {
     if (!first.trim()) next.first = "Tell us your first name";
     if (phone.replace(/\D/g, "").replace(/^1(\d{10})$/, "$1").length !== 10) next.phone = "Enter a 10-digit US mobile number";
     if (!exp) next.exp = "Pick the closest option";
+    if (exp === UNDER_MIN) next.exp = MIN_EXP_NOTE;
     if (!consent) next.consent = "Tick the box so a recruiter can call and text you";
     setErrors(next);
     if (Object.keys(next).length) return;
@@ -43,7 +46,7 @@ export function QuickForm({ compact = false }: { compact?: boolean }) {
       {!compact ? (
         <>
           <h3>Apply in 60 seconds</h3>
-          <p className="bl-note">Three fields. A recruiter calls you back in 5 minutes.</p>
+          <p className="bl-note">Three fields. A recruiter calls you back in 5 minutes. 2+ years CDL-A experience required.</p>
         </>
       ) : null}
       <label className="bl-field">
@@ -73,7 +76,7 @@ export function QuickForm({ compact = false }: { compact?: boolean }) {
       </label>
       {errors.consent ? <p className="bl-err" style={{ marginTop: "-0.5rem", marginBottom: "0.75rem" }}>{errors.consent}</p> : null}
       {errors.form ? <p className="bl-err" style={{ marginBottom: "0.75rem" }}>{errors.form}</p> : null}
-      <button className="bl-cta-submit" type="submit" disabled={busy}>
+      <button className="bl-cta-submit" type="submit" disabled={busy || exp === UNDER_MIN}>
         {busy ? "Sending" : "Get my callback"}
       </button>
       <p className="bl-note" style={{ marginTop: "0.75rem", marginBottom: 0, fontSize: "0.85rem" }}>

@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 
 import { CONSENT_TEXT, Footer, Header, IconArrow, IconCheck, PHONE_DISPLAY, PHONE_TEL, StickyBar } from "@/components/site/chrome";
-import { EXPERIENCE_OPTIONS } from "@/components/site/quick-form";
+import { EXPERIENCE_OPTIONS, MIN_EXP_NOTE, UNDER_MIN } from "@/components/site/quick-form";
 import { submitLead } from "@/lib/api/leads.functions";
 import { bindContactClicks, getAttribution, track } from "@/lib/tracking";
 
@@ -21,8 +21,8 @@ export const Route = createFileRoute("/apply")({
 });
 
 const LANES = [
-  ["Company OTR", "71¢ a mile solo, brand new truck, paid weekly"],
-  ["Team", "Higher weekly totals, consistent freight"],
+  ["Company OTR", "71¢ a mile solo, well-maintained truck, paid weekly"],
+  ["Team", "85 to 90¢ a mile for the team, consistent freight"],
   ["Lease purchase", "More control, bigger upside on good miles"],
   ["Not sure yet", "Your recruiter walks you through what is open"],
 ] as const;
@@ -112,8 +112,8 @@ function Apply() {
       <Header cta={false} />
       <main className="bl-quiz bl-page-end">
         <div className="bl-wrap bl-quiz__card">
-          <div className="bl-progress" aria-hidden="true"><span style={{ width: `${Math.round((step / TOTAL) * 100)}%` }} /></div>
-          <p className="bl-quiz__step">Step {step} of {TOTAL}</p>
+          <div className="bl-progress" aria-hidden="true"><span style={{ width: `${Math.round((Math.min(step, TOTAL) / TOTAL) * 100)}%` }} /></div>
+          <p className="bl-quiz__step">{step === 99 ? "Experience check" : `Step ${step} of ${TOTAL}`}</p>
 
           {step === 1 ? (
             <>
@@ -125,8 +125,18 @@ function Apply() {
           {step === 2 ? (
             <>
               <h1>How much CDL-A experience do you have?</h1>
-              <p className="bl-quiz__hint">Verifiable time behind the wheel with a Class A.</p>
-              <Options items={EXPERIENCE_OPTIONS.map((o) => [o, o === "Under 3 months" ? "Apply anyway, we will tell you what is open" : ""] as const)} value={exp} onPick={pick(setExp)} />
+              <p className="bl-quiz__hint">Verifiable OTR time with a Class A. Our carriers need 2 years or more.</p>
+              <Options items={EXPERIENCE_OPTIONS.map((o) => [o, ""] as const)} value={exp} onPick={(v) => { setExp(v); setStep(v === UNDER_MIN ? 99 : 3); }} />
+            </>
+          ) : null}
+          {step === 99 ? (
+            <>
+              <h1>Not quite yet</h1>
+              <p className="bl-quiz__hint">{MIN_EXP_NOTE}</p>
+              <div className="bl-final__row">
+                <a href={PHONE_TEL} className="bl-cta-primary" data-track="click_call">Call {PHONE_DISPLAY}</a>
+                <button type="button" className="bl-cta-call" onClick={() => setStep(2)}>Change my answer</button>
+              </div>
             </>
           ) : null}
           {step === 3 ? (
@@ -195,7 +205,7 @@ function Apply() {
           ) : null}
 
           <div className="bl-quiz__nav">
-            {step > 1 ? (
+            {step > 1 && step !== 99 ? (
               <button type="button" className="bl-cta-ghost" onClick={() => setStep((s) => s - 1)}>Back</button>
             ) : <span />}
             <a className="bl-cta-ghost" href={PHONE_TEL} data-track="click_call">Rather talk? {PHONE_DISPLAY}</a>

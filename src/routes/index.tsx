@@ -39,8 +39,8 @@ const scenes = scrollScrubScenes.map((s, i) =>
 const FAQ = [
   ["Is it really free?", "Yes. Carriers pay BlueLine a placement fee when you start. You never pay anything, and nothing comes out of your pay."],
   ["How fast will someone actually call?", "Within 5 minutes during working hours, from a (407) number. Apply overnight and you hear from us first thing in the morning. If you can't talk, text us and we work around your schedule."],
-  ["What experience do I need?", "A Class A CDL and 3 months of verifiable experience for the brand-new-truck program. Under 3 months? Apply anyway and we tell you exactly what is open to you right now."],
-  ["What is the pay, really?", "The solo company program we are running right now pays 71 cents a mile with a brand new truck, which works out to around $10K a month at normal miles. Team and lease programs pay differently. You hear the exact number for what you qualify for on the call, not a range on a website."],
+  ["What experience do I need?", "A Class A CDL and at least 2 years of verifiable OTR experience, with a clean enough record to pass our carriers' review (see the requirements above). Under 2 years? Call us and we tell you exactly when you will qualify."],
+  ["What is the pay, really?", "Solo company drivers earn 71 cents a mile. Teams earn 85 to 90 cents a mile for the truck. Lease programs pay differently. You hear the exact number for what you qualify for on the call, not a range on a website."],
   ["Who sees my number?", "Only your BlueLine recruiter. We do not sell or share leads, so you will not get calls from companies you never picked."],
   ["What about home time?", "It is the first thing we ask, before pay. Carriers that cannot meet your home time never see your application."],
 ] as const;
@@ -57,7 +57,7 @@ const orgJsonLd = {
   url: "https://www.linerecruiting.com/",
   telephone: "+1-407-683-5894",
   areaServed: "US",
-  description: "Free CDL-A driver recruiting. Apply once, a real recruiter calls in 5 minutes.",
+  description: "Free CDL-A driver recruiting for drivers with 2+ years OTR experience. Apply once, a real recruiter calls in 5 minutes.",
 };
 
 function Index() {
@@ -72,10 +72,10 @@ function Index() {
           <div className="bl-wrap bl-form-split">
             <div className="bl-form-side">
               <h2 className="bl-h2">Tell us what you want. We do the rest.</h2>
-              <p className="bl-lead">Three fields, then a real recruiter calls you. Bring your CDL and 3 months of experience, we bring the truck.</p>
+              <p className="bl-lead">Three fields, then a real recruiter calls you. Bring your Class A and 2 years of OTR experience, we bring the truck.</p>
               <ul className="bl-checks">
-                <li><IconCheck /> Brand new truck, 71¢ a mile solo, paid weekly</li>
-                <li><IconCheck /> Around $10K a month at normal miles</li>
+                <li><IconCheck /> 71¢ a mile solo, 85 to 90¢ a mile for teams, paid weekly</li>
+                <li><IconCheck /> Well-maintained trucks, consistent miles</li>
                 <li><IconCheck /> Home time set before you ever talk to a carrier</li>
                 <li><IconCheck /> Free for drivers. Carriers pay us, not you</li>
               </ul>
@@ -91,12 +91,12 @@ function Index() {
             <div className="bl-lanes">
               <Link to="/apply" search={{ lane: "Company OTR" }} className="bl-lane">
                 <h3>Company OTR</h3>
-                <p>The program we are running right now.</p>
+                <p>Solo OTR on well-maintained equipment.</p>
                 <ul>
                   <li>71¢ a mile solo</li>
-                  <li>Brand new truck</li>
-                  <li>Around $10K a month, paid weekly</li>
-                  <li>3 months experience minimum</li>
+                  <li>Well-maintained truck</li>
+                  <li>Paid weekly</li>
+                  <li>2+ years OTR experience</li>
                 </ul>
                 <span className="bl-lane__go">Start here <IconArrow /></span>
               </Link>
@@ -104,8 +104,8 @@ function Index() {
                 <h3>Team</h3>
                 <p>Run with a partner, keep the truck moving.</p>
                 <ul>
-                  <li>Higher weekly totals</li>
-                  <li>Consistent freight</li>
+                  <li>85 to 90¢ a mile for the team</li>
+                  <li>Consistent freight, higher weekly totals</li>
                   <li>Bring your co-driver or get matched</li>
                 </ul>
                 <span className="bl-lane__go">Start here <IconArrow /></span>
@@ -120,6 +120,32 @@ function Index() {
                 </ul>
                 <span className="bl-lane__go">Start here <IconArrow /></span>
               </Link>
+            </div>
+          </div>
+        </section>
+
+        <section className="bl-section" id="requirements">
+          <div className="bl-wrap">
+            <h2 className="bl-h2">What our carriers require</h2>
+            <p className="bl-lead">Check these before you apply. If you meet them, you will be talking to a recruiter within 5 minutes.</p>
+            <div className="bl-req">
+              <div>
+                <h3>Experience and license</h3>
+                <ul>
+                  <li>Class A CDL, 21 years or older</li>
+                  <li>At least 2 years of verifiable OTR experience</li>
+                  <li>Able to pass a DOT physical and drug test</li>
+                </ul>
+              </div>
+              <div>
+                <h3>Driving record</h3>
+                <ul>
+                  <li>No more than 1 CMV on-road preventable accident in the last 2 years</li>
+                  <li>No major CMV preventable accidents in the last 5 years</li>
+                  <li>No more than 2 moving violations in the last 2 years</li>
+                  <li>No DUI/DWI in the past 5 years, or 10 years if it happened while holding a CDL</li>
+                </ul>
+              </div>
             </div>
           </div>
         </section>
