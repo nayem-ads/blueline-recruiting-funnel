@@ -400,7 +400,7 @@ export function ScrollScrub({
     const readScroll = () => {
       const pageY = window.scrollY || window.pageYOffset;
       const y = clamp(pageY - rootTop, 0, total);
-      const crossfade = 0.35 * viewportHeight;
+      const N = runtime.length;
       let currentIndex = 0;
 
       for (const [index, segment] of runtime.entries()) {
@@ -414,26 +414,108 @@ export function ScrollScrub({
           ? lingerEase(local, segment.linger)
           : local;
 
-        let outside = 0;
-        if (y < segment.start) {
-          outside = segment.start - y;
-        }
-        if (y > segment.end) {
-          outside = y - segment.end;
-        }
-        let opacity = smoothstep(1 - outside / Math.max(crossfade, 1));
-        if (reduceMotion) {
-          opacity = outside === 0 ? 1 : 0;
+        // Calculate complementary chapter opacity
+        let chapterOpacity = 1;
+        if (N === 1) {
+          chapterOpacity = 1;
+        } else if (index === 0) {
+          const seam = segment.end;
+          const halfFade = Math.min(0.22 * viewportHeight, 0.22 * length);
+          if (y <= seam - halfFade) {
+            chapterOpacity = 1;
+          } else if (y >= seam + halfFade) {
+            chapterOpacity = 0;
+          } else {
+            const t = (y - (seam - halfFade)) / (2 * halfFade);
+            chapterOpacity = 1 - smoothstep(t);
+          }
+        } else if (index === N - 1) {
+          const prev = runtime[index - 1];
+          const seam = segment.start;
+          const halfFade = Math.min(
+            0.22 * viewportHeight,
+            0.22 * (prev.end - prev.start)
+          );
+          if (y <= seam - halfFade) {
+            chapterOpacity = 0;
+          } else if (y >= seam + halfFade) {
+            chapterOpacity = 1;
+          } else {
+            const t = (y - (seam - halfFade)) / (2 * halfFade);
+            chapterOpacity = smoothstep(t);
+          }
+        } else {
+          const prev = runtime[index - 1];
+          const seamIn = segment.start;
+          const halfFadeIn = Math.min(
+            0.22 * viewportHeight,
+            0.22 * (prev.end - prev.start)
+          );
+          let opIn = 1;
+          if (y <= seamIn - halfFadeIn) {
+            opIn = 0;
+          } else if (y < seamIn + halfFadeIn) {
+            const t = (y - (seamIn - halfFadeIn)) / (2 * halfFadeIn);
+            opIn = smoothstep(t);
+          }
+
+          const seamOut = segment.end;
+          const halfFadeOut = Math.min(0.22 * viewportHeight, 0.22 * length);
+          let opOut = 1;
+          if (y >= seamOut + halfFadeOut) {
+            opOut = 0;
+          } else if (y > seamOut - halfFadeOut) {
+            const t = (y - (seamOut - halfFadeOut)) / (2 * halfFadeOut);
+            opOut = 1 - smoothstep(t);
+          }
+          chapterOpacity = Math.min(opIn, opOut);
         }
 
-        segment.visible = opacity > 0.001;
-        segment.layer.style.opacity = String(opacity);
-        segment.layer.style.zIndex = index === currentIndex ? "2" : "1";
+        // Calculate video layer opacity
+        let layerOpacity = 1;
+        if (index === 0) {
+          if (N > 1) {
+            const seam = segment.end;
+            const halfFade = Math.min(0.22 * viewportHeight, 0.22 * length);
+            layerOpacity = y >= seam + halfFade ? 0 : 1;
+          }
+        } else {
+          const prev = runtime[index - 1];
+          const seamIn = segment.start;
+          const halfFadeIn = Math.min(
+            0.22 * viewportHeight,
+            0.22 * (prev.end - prev.start)
+          );
+          if (y <= seamIn - halfFadeIn) {
+            layerOpacity = 0;
+          } else if (y < seamIn + halfFadeIn) {
+            const t = (y - (seamIn - halfFadeIn)) / (2 * halfFadeIn);
+            layerOpacity = smoothstep(t);
+          } else {
+            if (index < N - 1) {
+              const seamOut = segment.end;
+              const halfFadeOut = Math.min(0.22 * viewportHeight, 0.22 * length);
+              layerOpacity = y >= seamOut + halfFadeOut ? 0 : 1;
+            } else {
+              layerOpacity = 1;
+            }
+          }
+        }
+
+        if (reduceMotion) {
+          chapterOpacity = index === currentIndex ? 1 : 0;
+          layerOpacity = index === currentIndex ? 1 : 0;
+        }
+
+        segment.visible = layerOpacity > 0.005;
+        segment.layer.style.opacity = String(layerOpacity);
+        segment.layer.style.zIndex = String(index + 1);
 
         if (segment.chapter) {
-          segment.chapter.style.opacity = String(opacity);
-          segment.chapter.style.pointerEvents = opacity > 0.4 ? "auto" : "none";
-          segment.chapter.style.zIndex = index === currentIndex ? "4" : "3";
+          segment.chapter.style.opacity = String(chapterOpacity);
+          segment.chapter.style.pointerEvents =
+            chapterOpacity > 0.4 ? "auto" : "none";
+          segment.chapter.style.zIndex = String(index + 2);
         }
 
         if (
