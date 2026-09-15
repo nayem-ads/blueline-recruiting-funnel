@@ -19,6 +19,22 @@ async function getServerEntry(): Promise<ServerEntry> {
   return serverEntryPromise;
 }
 
+let dbInitPromise: Promise<void> | undefined;
+
+// Lazily initializes the Postgres `leads` table on first request. Guarded
+// so a missing/broken DATABASE_URL never takes down unrelated routes.
+async function ensureDatabaseReady(): Promise<void> {
+  if (!process.env.DATABASE_URL) return;
+  if (!dbInitPromise) {
+    dbInitPromise = import("./server/db")
+      .then(({ initializeDatabase }) => initializeDatabase())
+      .catch((error) => {
+        console.error("Database initialization failed:", error);
+      });
+  }
+  return dbInitPromise;
+}
+
 // h3 swallows in-handler throws into a normal 500 Response with body
 // {"unhandled":true,"message":"HTTPError"} — try/catch alone never fires for those.
 async function normalizeCatastrophicSsrResponse(response: Response): Promise<Response> {
@@ -44,6 +60,7 @@ export default {
       (globalThis as unknown as { __CF_ENV__?: unknown }).__CF_ENV__ = env;
     }
     try {
+      await ensureDatabaseReady();
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return applySecurityHeaders(await normalizeCatastrophicSsrResponse(response));

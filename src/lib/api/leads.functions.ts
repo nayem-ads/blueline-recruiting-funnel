@@ -3,6 +3,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 
 import { bindings } from "../bindings.server";
+import { saveLead } from "@/server/leads";
 
 // HubSpot portal + form the live linerecruiting.com site already submits to.
 const HUBSPOT_PORTAL = "50966263";
@@ -120,5 +121,24 @@ export const submitLead = createServerFn({ method: "POST" })
         .run();
       leadId = (r.meta?.last_row_id as number | undefined) ?? null;
     }
-    return { ok: true, leadId, hubspot: hs.status };
+
+    const name = `${data.first_name} ${data.last_name}`.trim();
+    const email = data.email || `${data.phone}@no-email.linerecruiting.com`;
+    const company = data.lane || null;
+    const message = [
+      data.experience && `CDL-A experience: ${data.experience}`,
+      data.home_time && `Home time: ${data.home_time}`,
+      data.matters && `Matters most: ${data.matters}`,
+    ]
+      .filter(Boolean)
+      .join(" | ") || null;
+
+    let savedLead = null;
+    try {
+      savedLead = await saveLead({ name, email, phone: data.phone, company, message, source: "form" });
+    } catch (error) {
+      console.error("Failed to persist lead to Postgres:", error);
+    }
+
+    return { ok: true, leadId, hubspot: hs.status, lead: savedLead };
   });
