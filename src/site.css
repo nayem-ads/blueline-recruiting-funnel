@@ -32,12 +32,24 @@ body.bl { margin: 0; background: var(--bl-ground); color: var(--bl-ink); font-fa
 .bl .scroll-scrub__chapter-pin { padding-top: clamp(6rem, 11vw, 9rem); }
 .bl .scroll-scrub__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
 
-/* Number / headline highlight for maximum attention */
-.bl-hl { color: #3D86FF; text-shadow: 0 0 24px rgba(61, 134, 255, 0.5); display: inline; }
+/* Number / headline highlight with stylish accent underline */
+.bl-hl {
+  color: #3D86FF;
+  text-shadow: 0 0 20px rgba(61, 134, 255, 0.4);
+  text-decoration: underline;
+  text-decoration-color: #1A6EF4;
+  text-decoration-thickness: max(3px, 0.08em);
+  text-underline-offset: 0.14em;
+}
 
 @media (max-width: 860px) {
-  .bl .scroll-scrub__title { font-size: clamp(2.2rem, 9.2vw, 3.4rem); max-width: 100%; line-height: 1.02; }
-  .bl .scroll-scrub__chapter-pin { padding-top: 5.5rem; justify-content: flex-end; }
+  .bl .scroll-scrub__title { font-size: clamp(2rem, 8vw, 3.2rem); max-width: 100%; line-height: 1.02; }
+  .bl .scroll-scrub__chapter-pin {
+    padding-top: calc(var(--bl-bar) + 1.25rem);
+    padding-bottom: calc(5.25rem + env(safe-area-inset-bottom));
+    align-items: flex-end;
+    justify-content: flex-start;
+  }
 }
 
 /* Header */
@@ -161,8 +173,8 @@ body.bl { margin: 0; background: var(--bl-ground); color: var(--bl-ink); font-fa
 /* Sticky mobile bar */
 .bl-sticky { display: none; }
 @media (max-width: 860px) {
-  .bl-sticky { display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 6px; position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; padding: 8px 10px calc(8px + env(safe-area-inset-bottom)); background: rgba(10,19,36,0.94); backdrop-filter: blur(10px); border-top: 1px solid var(--bl-line); }
-  .bl-sticky a { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; min-height: 50px; border-radius: var(--bl-radius); font-weight: 700; font-size: 1rem; border: 1.5px solid var(--bl-line); color: var(--bl-ink); background: var(--bl-panel); }
+  .bl-sticky { display: grid; grid-template-columns: 1fr 1.35fr; gap: 8px; position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); background: rgba(10,19,36,0.96); backdrop-filter: blur(10px); border-top: 1px solid var(--bl-line); }
+  .bl-sticky a { display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem; min-height: 50px; border-radius: var(--bl-radius); font-weight: 700; font-size: 1.02rem; border: 1.5px solid var(--bl-line); color: var(--bl-ink); background: var(--bl-panel); }
   .bl-sticky a.is-primary { background: var(--bl-accent); border-color: var(--bl-accent); color: #fff; }
   .bl-sticky svg { width: 18px; height: 18px; }
   .bl-page-end { padding-bottom: 80px; }

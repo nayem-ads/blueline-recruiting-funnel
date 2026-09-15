@@ -72,9 +72,8 @@ export function Header({ cta = true }: { cta?: boolean }) {
 export function StickyBar() {
   return (
     <nav className="bl-sticky" aria-label="Quick actions">
-      <a href={PHONE_TEL} data-track="click_call"><IconPhone />Call</a>
-      <a href={SMS_HREF} data-track="click_text"><IconText />Text</a>
-      <Link to="/apply" className="is-primary">Apply<IconArrow /></Link>
+      <a href={PHONE_TEL} data-track="click_call"><IconPhone />Call ({PHONE_DISPLAY.slice(1, 4)})</a>
+      <Link to="/apply" className="is-primary">See if I qualify<IconArrow /></Link>
     </nav>
   );
 }

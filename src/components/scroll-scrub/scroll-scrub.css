@@ -25,6 +25,10 @@
   inset: 0;
   width: 100%;
   height: 100%;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .scroll-scrub__media {
@@ -242,9 +246,9 @@
   .scroll-scrub__chapter[data-align="right"] .scroll-scrub__chapter-pin {
     align-items: flex-end;
     justify-content: flex-start;
-    padding: 6.5rem max(1.25rem, env(safe-area-inset-right))
-      calc(4rem + env(safe-area-inset-bottom))
-      max(1.25rem, env(safe-area-inset-left));
+    padding: 4.5rem max(1rem, env(safe-area-inset-right))
+      calc(4.75rem + env(safe-area-inset-bottom))
+      max(1rem, env(safe-area-inset-left));
   }
 
   .scroll-scrub__copy {
@@ -252,18 +256,18 @@
   }
 
   .scroll-scrub__copy::before {
-    inset: -3rem -2rem;
+    inset: -2.5rem -1.5rem;
     background: linear-gradient(
       to top,
       var(--ss-bg) 0%,
-      color-mix(in srgb, var(--ss-bg) 82%, transparent) 58%,
+      color-mix(in srgb, var(--ss-bg) 85%, transparent) 55%,
       transparent 100%
     );
   }
 
   .scroll-scrub__title {
-    max-width: 14ch;
-    font-size: clamp(2.3rem, 11vw, 4.5rem);
+    max-width: 100%;
+    font-size: clamp(1.65rem, 6.5vw, 2.25rem);
   }
 }
 

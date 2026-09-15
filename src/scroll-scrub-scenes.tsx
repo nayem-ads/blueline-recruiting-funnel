@@ -19,11 +19,11 @@ export const scrollScrubScenes: ScrollScrubScene[] = [
     kicker: "CDL-A drivers with 2+ years OTR experience",
     title: (
       <>
-        <span className="bl-hl">71¢</span> a mile solo.
+        <span className="bl-hl">71¢</span> A MILE SOLO.
         <br />
-        <span className="bl-hl">85 to 90¢</span> teams.
+        <span className="bl-hl">85 TO 90¢</span> TEAMS.
         <br />
-        Home when you say.
+        HOME WHEN YOU SAY.
       </>
     ),
     body: "Tell us what you want out of your next job once. We put it in front of carriers that fit, and a real recruiter calls you back in 5 minutes.",
@@ -42,9 +42,9 @@ export const scrollScrubScenes: ScrollScrubScene[] = [
     label: "Apply once",
     title: (
       <>
-        Apply once.
+        APPLY ONCE.
         <br />
-        We do the applying.
+        WE DO THE APPLYING.
       </>
     ),
     body: "No ten forms on ten websites. Your pay, home time and lane preferences go to vetted carriers together, and you only talk to the ones that match.",
@@ -64,9 +64,9 @@ export const scrollScrubScenes: ScrollScrubScene[] = [
     label: "5-minute callback",
     title: (
       <>
-        A real recruiter calls
+        A REAL RECRUITER CALLS
         <br />
-        in <span className="bl-hl">5 minutes</span>.
+        IN <span className="bl-hl">5 MINUTES</span>.
       </>
     ),
     body: "One person who knows your name and your home-time ask. Not a robot, not a reseller, not forty calls from companies you never picked.",

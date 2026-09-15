@@ -26,8 +26,8 @@ const recruiterActions = (
     <Link to="/apply" className="bl-cta-primary">
       See if I qualify <IconArrow />
     </Link>
-    <a href={SMS_HREF} className="bl-cta-call" data-track="click_text">
-      <IconText /> Text us instead
+    <a href={PHONE_TEL} className="bl-cta-call" data-track="click_call">
+      <IconPhone /> Call {PHONE_DISPLAY}
     </a>
   </>
 );

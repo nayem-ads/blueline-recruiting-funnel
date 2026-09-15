@@ -77,6 +77,7 @@ interface RuntimeSegment extends Segment {
   end: number;
   current: number;
   target: number;
+  pendingTarget?: number | null;
   visible: boolean;
   loading: boolean;
   ready: boolean;
@@ -380,15 +381,23 @@ export function ScrollScrub({
           },
           { once: true }
         );
-        video.addEventListener(
-          "seeked",
-          () => {
-            if (segment.video === video && segment.loadedSource === source) {
-              segment.layer.dataset.videoPainted = "true";
+        video.addEventListener("seeked", () => {
+          if (segment.video === video && segment.loadedSource === source) {
+            segment.layer.dataset.videoPainted = "true";
+            if (
+              segment.pendingTarget !== null &&
+              segment.pendingTarget !== undefined
+            ) {
+              const nextTime = segment.pendingTarget;
+              segment.pendingTarget = null;
+              try {
+                video.currentTime = nextTime;
+              } catch {
+                // browser catchup
+              }
             }
-          },
-          { once: true }
-        );
+          }
+        });
 
         segment.layer.append(video);
         segment.objectUrl = objectUrl;
@@ -469,7 +478,7 @@ export function ScrollScrub({
     const updateVideos = () => {
       for (const segment of runtime) {
         const { video } = segment;
-        if (!video || !segment.ready || video.seeking) {
+        if (!video || !segment.ready) {
           continue;
         }
         if (
@@ -479,15 +488,21 @@ export function ScrollScrub({
           continue;
         }
 
-        segment.current += (segment.target - segment.current) * 0.2;
+        const lerpRate = isMobile() ? 0.38 : 0.25;
+        segment.current += (segment.target - segment.current) * lerpRate;
         const targetTime =
           clamp(segment.current, 0, 0.999) * (video.duration || 1);
-        const epsilon = isMobile() ? 0.02 : 0.008;
+        const epsilon = isMobile() ? 0.01 : 0.005;
         if (Math.abs(video.currentTime - targetTime) > epsilon) {
-          try {
-            video.currentTime = targetTime;
-          } catch {
-            // Keep the last painted frame while the browser catches up.
+          if (!video.seeking) {
+            segment.pendingTarget = null;
+            try {
+              video.currentTime = targetTime;
+            } catch {
+              // Keep the last painted frame while the browser catches up.
+            }
+          } else {
+            segment.pendingTarget = targetTime;
           }
         }
       }
@@ -543,6 +558,7 @@ export function ScrollScrub({
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("touchmove", onScroll, { passive: true });
     window.addEventListener("resize", onResize);
     window.addEventListener("orientationchange", layout);
     window.addEventListener("pointerdown", onFirstGesture, {
@@ -555,6 +571,9 @@ export function ScrollScrub({
     });
 
     layout();
+    for (const segment of runtime) {
+      void loadClip(segment);
+    }
     frame = window.requestAnimationFrame(tick);
 
     return () => {
@@ -562,6 +581,7 @@ export function ScrollScrub({
       controllerRef.current = null;
       window.cancelAnimationFrame(frame);
       window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("touchmove", onScroll);
       window.removeEventListener("resize", onResize);
       window.removeEventListener("orientationchange", layout);
       window.removeEventListener("pointerdown", onFirstGesture);
