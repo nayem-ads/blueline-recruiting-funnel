@@ -73,6 +73,7 @@ interface Segment {
 interface RuntimeSegment extends Segment {
   band: HTMLElement;
   layer: HTMLElement;
+  chapter?: HTMLElement;
   start: number;
   end: number;
   current: number;
@@ -199,6 +200,9 @@ export function ScrollScrub({
     const layerNodes = [
       ...root.querySelectorAll<HTMLElement>("[data-scroll-scrub-layer]"),
     ];
+    const chapterNodes = [
+      ...root.querySelectorAll<HTMLElement>("[data-scroll-scrub-chapter]"),
+    ];
     const bandNodes = [
       ...root.querySelectorAll<HTMLElement>("[data-scroll-scrub-band]"),
     ];
@@ -222,6 +226,7 @@ export function ScrollScrub({
     const runtime: RuntimeSegment[] = segments.map((segment, index) => ({
       ...segment,
       band: bandNodes[index],
+      chapter: chapterNodes[index],
       current: 0,
       end: 0,
       failed: false,
@@ -425,11 +430,17 @@ export function ScrollScrub({
         segment.layer.style.opacity = String(opacity);
         segment.layer.style.zIndex = index === currentIndex ? "2" : "1";
 
+        if (segment.chapter) {
+          segment.chapter.style.opacity = String(opacity);
+          segment.chapter.style.pointerEvents = opacity > 0.4 ? "auto" : "none";
+          segment.chapter.style.zIndex = index === currentIndex ? "4" : "3";
+        }
+
         if (
           y > segment.start - 1.5 * viewportHeight &&
           y < segment.end + 1.5 * viewportHeight
         ) {
-          void loadClip(segment);
+          loadClip(segment);
         }
       }
 
@@ -641,63 +652,69 @@ export function ScrollScrub({
             </button>
           ))}
         </nav>
+
+        <div className="scroll-scrub__overlay">
+          {segments.map((segment) => {
+            const { scene } = segment;
+            if (!scene) {
+              return (
+                <div
+                  className="scroll-scrub__chapter scroll-scrub__chapter--connector"
+                  data-scroll-scrub-chapter=""
+                  key={segment.key}
+                />
+              );
+            }
+            const Heading = segment.sectionIndex === 0 ? "h1" : "h2";
+
+            return (
+              <article
+                className="scroll-scrub__chapter"
+                data-align={scene.align ?? "left"}
+                data-scroll-scrub-chapter=""
+                id={scene.id}
+                key={segment.key}
+              >
+                <div className="scroll-scrub__chapter-pin">
+                  <div className="scroll-scrub__copy">
+                    {scene.kicker ? (
+                      <p className="scroll-scrub__kicker">{scene.kicker}</p>
+                    ) : null}
+                    <Heading className="scroll-scrub__title">
+                      {scene.title}
+                    </Heading>
+                    <p className="scroll-scrub__body">{scene.body}</p>
+                    {scene.tags?.length ? (
+                      <ul className="scroll-scrub__tags">
+                        {scene.tags.map((tag) => (
+                          <li key={tag}>{tag}</li>
+                        ))}
+                      </ul>
+                    ) : null}
+                    {scene.actions ? (
+                      <div className="scroll-scrub__actions">{scene.actions}</div>
+                    ) : null}
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
       </div>
 
-      <div className="scroll-scrub__story">
+      <div className="scroll-scrub__story" aria-hidden="true">
         {segments.map((segment) => {
           const bandStyle: CSSProperties = {
             minHeight: `${Math.max(segment.weight, 0.2) * 100}dvh`,
           };
 
-          if (segment.kind === "connector") {
-            return (
-              <div
-                aria-hidden="true"
-                className="scroll-scrub__connector-band"
-                data-scroll-scrub-band=""
-                key={segment.key}
-                style={bandStyle}
-              />
-            );
-          }
-
-          const { scene } = segment;
-          if (!scene) {
-            return null;
-          }
-          const Heading = segment.sectionIndex === 0 ? "h1" : "h2";
-
           return (
-            <article
-              className="scroll-scrub__chapter"
-              data-align={scene.align ?? "left"}
+            <div
+              className="scroll-scrub__band"
               data-scroll-scrub-band=""
-              id={scene.id}
               key={segment.key}
               style={bandStyle}
-            >
-              <div className="scroll-scrub__chapter-pin">
-                <div className="scroll-scrub__copy">
-                  {scene.kicker ? (
-                    <p className="scroll-scrub__kicker">{scene.kicker}</p>
-                  ) : null}
-                  <Heading className="scroll-scrub__title">
-                    {scene.title}
-                  </Heading>
-                  <p className="scroll-scrub__body">{scene.body}</p>
-                  {scene.tags?.length ? (
-                    <ul className="scroll-scrub__tags">
-                      {scene.tags.map((tag) => (
-                        <li key={tag}>{tag}</li>
-                      ))}
-                    </ul>
-                  ) : null}
-                  {scene.actions ? (
-                    <div className="scroll-scrub__actions">{scene.actions}</div>
-                  ) : null}
-                </div>
-              </div>
-            </article>
+            />
           );
         })}
       </div>
