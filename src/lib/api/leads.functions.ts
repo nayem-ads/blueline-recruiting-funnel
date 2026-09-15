@@ -2,8 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 
-import { bindings } from "../bindings.server";
 import { saveLead } from "@/server/leads";
+import { sendBrevoLeadNotification } from "../notifications/brevo.server";
 
 // HubSpot portal + form the live linerecruiting.com site already submits to.
 const HUBSPOT_PORTAL = "50966263";
@@ -21,6 +21,7 @@ export const leadSchema = z.object({
   last_name: z.string().trim().max(60).optional().default(""),
   phone: phoneSchema,
   email: z.string().trim().email().max(120).optional().or(z.literal("")).default(""),
+  zip: z.string().trim().max(10).optional().default(""),
   state: z.string().trim().max(40).optional().default(""),
   city: z.string().trim().max(80).optional().default(""),
   lane: z.string().trim().max(60).optional().default(""),
@@ -47,6 +48,7 @@ function hubspotFields(d: LeadInput, minimal: boolean): HsField[] {
   const notes = [
     d.lane && `Looking for: ${d.lane}`,
     d.experience && `CDL-A experience: ${d.experience}`,
+    d.zip && `ZIP Code: ${d.zip}`,
     d.home_time && `Home time: ${d.home_time}`,
     d.matters && `Matters most: ${d.matters}`,
     `Source: linerecruiting funnel (${d.source})`,
@@ -59,6 +61,7 @@ function hubspotFields(d: LeadInput, minimal: boolean): HsField[] {
     f("firstname", d.first_name),
     f("lastname", d.last_name || "-"),
     f("phone", `+1${d.phone}`),
+    f("zip", d.zip || ""),
     f("city", d.city || "-"),
     f("state", d.state || "-"),
     f("notes", notes),
@@ -102,26 +105,36 @@ export const submitLead = createServerFn({ method: "POST" })
     const ua = (req?.headers.get("user-agent") ?? "").slice(0, 300);
     const { DB } = bindings();
 
-    const hs = await pushToHubspot(data, ip);
+    // Concurrently dispatch HubSpot form submission and Brevo email notification
+    const [hsResult, brevoResult] = await Promise.allSettled([
+      pushToHubspot(data, ip),
+      sendBrevoLeadNotification(data, { ip, ua }),
+    ]);
+
+    const hs = hsResult.status === "fulfilled" ? hsResult.value : { status: "rejected", error: String(hsResult.reason) };
+    const brevo = brevoResult.status === "fulfilled" ? brevoResult.value : { ok: false, status: "rejected", error: String(brevoResult.reason) };
 
     let leadId: number | null = null;
     if (DB) {
-      const r = await DB.prepare(
-        `INSERT INTO leads (source, first_name, last_name, phone, email, state, city, lane, experience, home_time, matters,
-          sms_consent, consent_text, utm_source, utm_medium, utm_campaign, utm_content, utm_term, fbclid, page_uri, user_agent, ip,
-          hubspot_status, hubspot_error)
-         VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15,?16,?17,?18,?19,?20,?21,?22,?23,?24)`,
-      )
-        .bind(
-          data.source, data.first_name, data.last_name, data.phone, data.email, data.state, data.city, data.lane,
-          data.experience, data.home_time, data.matters, data.sms_consent ? 1 : 0, data.consent_text, data.utm_source,
-          data.utm_medium, data.utm_campaign, data.utm_content, data.utm_term, data.fbclid, data.page_uri, ua, ip,
-          hs.status, hs.error,
+      try {
+        const r = await DB.prepare(
+          `INSERT INTO leads (source, first_name, last_name, phone, email, state, city, lane, experience, home_time, matters,
+            sms_consent, consent_text, utm_source, utm_medium, utm_campaign, utm_content, utm_term, fbclid, page_uri, user_agent, ip,
+            hubspot_status, hubspot_error)
+           VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15,?16,?17,?18,?19,?20,?21,?22,?23,?24)`,
         )
-        .run();
-      leadId = (r.meta?.last_row_id as number | undefined) ?? null;
+          .bind(
+            data.source, data.first_name, data.last_name, data.phone, data.email, data.state, data.city, data.lane,
+            data.experience, data.home_time, data.matters, data.sms_consent ? 1 : 0, data.consent_text, data.utm_source,
+            data.utm_medium, data.utm_campaign, data.utm_content, data.utm_term, data.fbclid, data.page_uri, ua, ip,
+            hs.status, hs.error,
+          )
+          .run();
+        leadId = (r.meta?.last_row_id as number | undefined) ?? null;
+      } catch (dbErr) {
+        console.error("[leads] Database insert error:", dbErr);
+      }
     }
-
     const name = `${data.first_name} ${data.last_name}`.trim();
     const email = data.email || `${data.phone}@no-email.linerecruiting.com`;
     const company = data.lane || null;
@@ -140,5 +153,5 @@ export const submitLead = createServerFn({ method: "POST" })
       console.error("Failed to persist lead to Postgres:", error);
     }
 
-    return { ok: true, leadId, hubspot: hs.status, lead: savedLead };
+    return { ok: true, leadId, hubspot: hs.status, brevo: brevo.status, lead: savedLead };
   });

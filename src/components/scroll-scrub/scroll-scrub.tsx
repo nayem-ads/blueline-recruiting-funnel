@@ -244,14 +244,8 @@ export function ScrollScrub({
     let userReady = false;
 
     const unloadClip = (segment: RuntimeSegment) => {
-      segment.abort?.abort();
       segment.video?.remove();
-      if (segment.objectUrl) {
-        URL.revokeObjectURL(segment.objectUrl);
-      }
-      delete segment.abort;
       delete segment.video;
-      delete segment.objectUrl;
       delete segment.loadedSource;
       segment.loading = false;
       segment.ready = false;
@@ -268,11 +262,17 @@ export function ScrollScrub({
       layoutWidth = window.innerWidth;
 
       for (const segment of runtime) {
+        const expectedSource = sourceFor(segment);
         if (
+          segment.video &&
           segment.loadedSource &&
-          segment.loadedSource !== sourceFor(segment)
+          segment.loadedSource !== expectedSource
         ) {
-          unloadClip(segment);
+          segment.loadedSource = expectedSource;
+          segment.ready = false;
+          delete segment.layer.dataset.videoPainted;
+          segment.video.src = expectedSource;
+          segment.video.load();
         }
         const rect = segment.band.getBoundingClientRect();
         segment.start = rect.top + pageY - rootTop;
@@ -283,7 +283,7 @@ export function ScrollScrub({
     };
 
     const primeVideo = async (video?: HTMLVideoElement) => {
-      if (!video || !isMobile()) {
+      if (!video) {
         return;
       }
       try {
@@ -294,7 +294,7 @@ export function ScrollScrub({
       }
     };
 
-    const loadClip = async (segment: RuntimeSegment) => {
+    const loadClip = (segment: RuntimeSegment) => {
       const source = sourceFor(segment);
       if (
         reduceMotion ||
@@ -302,33 +302,16 @@ export function ScrollScrub({
         segment.loading ||
         segment.ready ||
         segment.failed ||
-        !source
+        !source ||
+        segment.video
       ) {
         return;
       }
 
       segment.loading = true;
       segment.loadedSource = source;
-      segment.abort = new AbortController();
-      const request = segment.abort;
 
       try {
-        const response = await fetch(source, {
-          signal: request.signal,
-        });
-        if (!response.ok) {
-          throw new Error(`Clip failed: ${response.status}`);
-        }
-        const blob = await response.blob();
-        if (
-          destroyed ||
-          request.signal.aborted ||
-          segment.loadedSource !== source
-        ) {
-          return;
-        }
-
-        const objectUrl = URL.createObjectURL(blob);
         const video = document.createElement("video");
         video.className = "scroll-scrub__video";
         video.muted = true;
@@ -336,7 +319,7 @@ export function ScrollScrub({
         video.preload = "auto";
         video.setAttribute("muted", "");
         video.setAttribute("playsinline", "");
-        video.src = objectUrl;
+        video.src = source;
 
         video.addEventListener(
           "loadedmetadata",
@@ -347,6 +330,9 @@ export function ScrollScrub({
             segment.ready = true;
             segment.loading = false;
             dirty = true;
+            if (userReady) {
+              void primeVideo(video);
+            }
           },
           { once: true }
         );
@@ -370,9 +356,7 @@ export function ScrollScrub({
               return;
             }
             video.remove();
-            URL.revokeObjectURL(objectUrl);
             delete segment.video;
-            delete segment.objectUrl;
             segment.failed = true;
             segment.loading = false;
             segment.ready = false;
@@ -400,16 +384,8 @@ export function ScrollScrub({
         });
 
         segment.layer.append(video);
-        segment.objectUrl = objectUrl;
         segment.video = video;
       } catch (error) {
-        if (
-          request.signal.aborted ||
-          (error instanceof Error && error.name === "AbortError") ||
-          segment.loadedSource !== source
-        ) {
-          return;
-        }
         segment.layer.dataset.videoFailed = "true";
         segment.failed = true;
         segment.loading = false;
@@ -419,7 +395,7 @@ export function ScrollScrub({
     const readScroll = () => {
       const pageY = window.scrollY || window.pageYOffset;
       const y = clamp(pageY - rootTop, 0, total);
-      const crossfade = 0.1 * viewportHeight;
+      const crossfade = 0.35 * viewportHeight;
       let currentIndex = 0;
 
       for (const [index, segment] of runtime.entries()) {

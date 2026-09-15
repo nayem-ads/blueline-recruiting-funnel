@@ -38,8 +38,6 @@ const MATTERS = [
   ["New equipment", ""],
   ["Steady miles, no sitting", ""],
 ] as const;
-const STATES = ["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"];
-
 const TOTAL = 6;
 
 function Apply() {
@@ -50,8 +48,7 @@ function Apply() {
   const [exp, setExp] = useState("");
   const [home, setHome] = useState("");
   const [matters, setMatters] = useState("");
-  const [state, setState] = useState("");
-  const [city, setCity] = useState("");
+  const [zip, setZip] = useState("");
   const [first, setFirst] = useState("");
   const [last, setLast] = useState("");
   const [phone, setPhone] = useState("");
@@ -85,7 +82,7 @@ function Apply() {
     try {
       await submitLead({
         data: {
-          source: "quiz", first_name: first, last_name: last, phone, state, city, lane, experience: exp, home_time: home, matters,
+          source: "quiz", first_name: first, last_name: last, phone, zip, lane, experience: exp, home_time: home, matters,
           sms_consent: consent, consent_text: CONSENT_TEXT, website: honeypot, ...getAttribution(),
         },
       });
@@ -155,22 +152,39 @@ function Apply() {
           ) : null}
           {step === 5 ? (
             <>
-              <h1>Where are you based?</h1>
+              <h1>What is your ZIP code?</h1>
               <p className="bl-quiz__hint">So we match you to carriers that hire in your area.</p>
-              <div className="bl-row2">
+              <div style={{ maxWidth: "260px", margin: "0 auto 1.5rem auto" }}>
                 <label className="bl-field">
-                  <span>State</span>
-                  <select className="bl-select" value={state} onChange={(e) => setState(e.target.value)} autoComplete="address-level1">
-                    <option value="">Choose</option>
-                    {STATES.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </label>
-                <label className="bl-field">
-                  <span>City</span>
-                  <input className="bl-input" value={city} onChange={(e) => setCity(e.target.value)} autoComplete="address-level2" placeholder="Orlando" />
+                  <span>5-digit ZIP code</span>
+                  <input
+                    className="bl-input"
+                    type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={5}
+                    placeholder="e.g. 75001"
+                    autoComplete="postal-code"
+                    autoFocus
+                    value={zip}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/\D/g, "").slice(0, 5);
+                      setZip(v);
+                      if (v.length === 5) {
+                        setStep(6);
+                      }
+                    }}
+                  />
                 </label>
               </div>
-              <button type="button" className="bl-cta-submit" onClick={() => setStep(6)}>Last step</button>
+              <button
+                type="button"
+                className="bl-cta-submit"
+                disabled={zip.length < 5}
+                onClick={() => setStep(6)}
+              >
+                Last step
+              </button>
             </>
           ) : null}
           {step === 6 ? (

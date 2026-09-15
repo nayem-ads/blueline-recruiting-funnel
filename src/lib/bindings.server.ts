@@ -14,6 +14,10 @@ type AppEnv = {
   CONTAINER?: DurableObjectNamespace;
   HF_ENV?: string;
   APP_SLUG?: string;
+  BREVO_API_KEY?: string;
+  BREVO_TO_EMAIL?: string;
+  BREVO_SENDER_EMAIL?: string;
+  BREVO_SENDER_NAME?: string;
 };
 
 export function bindings(): AppEnv {
