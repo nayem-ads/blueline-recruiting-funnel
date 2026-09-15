@@ -1,10 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
-export const PHONE_DISPLAY = "(407) 683-5894";
-export const PHONE_TEL = "tel:+14076835894";
+export const PHONE_DISPLAY = "(816) 256-8329";
+export const PHONE_TEL = "tel:+18162568329";
 export const SMS_HREF =
-  "sms:+14076835894?&body=" +
+  "sms:+18162568329?&body=" +
   encodeURIComponent("Hey BlueLine, I'm looking for a CDL job. My name is ");
 export const CONSENT_TEXT =
   "I agree to receive calls and texts from BlueLine Recruiting at the number provided, including by automated means, about CDL job opportunities. Consent is not a condition of any purchase. Msg and data rates may apply. Reply STOP to opt out.";

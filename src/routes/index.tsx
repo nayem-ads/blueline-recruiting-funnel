@@ -38,7 +38,7 @@ const scenes = scrollScrubScenes.map((s, i) =>
 
 const FAQ = [
   ["Is it really free?", "Yes. Carriers pay BlueLine a placement fee when you start. You never pay anything, and nothing comes out of your pay."],
-  ["How fast will someone actually call?", "Within 5 minutes during working hours, from a (407) number. Apply overnight and you hear from us first thing in the morning. If you can't talk, text us and we work around your schedule."],
+  ["How fast will someone actually call?", "Within 5 minutes during working hours, from a (816) number. Apply overnight and you hear from us first thing in the morning. If you can't talk, text us and we work around your schedule."],
   ["What experience do I need?", "A Class A CDL and at least 2 years of verifiable OTR experience, with a clean enough record to pass our carriers' review (see the requirements above). Under 2 years? Call us and we tell you exactly when you will qualify."],
   ["What is the pay, really?", "Solo company drivers earn 71 cents a mile. Teams earn 85 to 90 cents a mile for the truck. Lease programs pay differently. You hear the exact number for what you qualify for on the call, not a range on a website."],
   ["Who sees my number?", "Only your BlueLine recruiter. We do not sell or share leads, so you will not get calls from companies you never picked."],
@@ -55,7 +55,7 @@ const orgJsonLd = {
   "@type": "EmploymentAgency",
   name: "BlueLine Recruiting",
   url: "https://www.linerecruiting.com/",
-  telephone: "+1-407-683-5894",
+  telephone: "+1-816-256-8329",
   areaServed: "US",
   description: "Free CDL-A driver recruiting for drivers with 2+ years OTR experience. Apply once, a real recruiter calls in 5 minutes.",
 };
@@ -74,7 +74,7 @@ function Index() {
               <h2 className="bl-h2">Tell us what you want. We do the rest.</h2>
               <p className="bl-lead">Three fields, then a real recruiter calls you. Bring your Class A and 2 years of OTR experience, we bring the truck.</p>
               <ul className="bl-checks">
-                <li><IconCheck /> 71¢ a mile solo, 85 to 90¢ a mile for teams, paid weekly</li>
+                <li><IconCheck /> <strong className="bl-hl">71¢</strong> a mile solo, <strong className="bl-hl">85 to 90¢</strong> a mile for teams, paid weekly</li>
                 <li><IconCheck /> Well-maintained trucks, consistent miles</li>
                 <li><IconCheck /> Home time set before you ever talk to a carrier</li>
                 <li><IconCheck /> Free for drivers. Carriers pay us, not you</li>
@@ -93,10 +93,10 @@ function Index() {
                 <h3>Company OTR</h3>
                 <p>Solo OTR on well-maintained equipment.</p>
                 <ul>
-                  <li>71¢ a mile solo</li>
+                  <li><strong className="bl-hl">71¢</strong> a mile solo</li>
                   <li>Well-maintained truck</li>
                   <li>Paid weekly</li>
-                  <li>2+ years OTR experience</li>
+                  <li><strong className="bl-hl">2+ years</strong> OTR experience</li>
                 </ul>
                 <span className="bl-lane__go">Start here <IconArrow /></span>
               </Link>
@@ -104,7 +104,7 @@ function Index() {
                 <h3>Team</h3>
                 <p>Run with a partner, keep the truck moving.</p>
                 <ul>
-                  <li>85 to 90¢ a mile for the team</li>
+                  <li><strong className="bl-hl">85 to 90¢</strong> a mile for the team</li>
                   <li>Consistent freight, higher weekly totals</li>
                   <li>Bring your co-driver or get matched</li>
                 </ul>
@@ -185,7 +185,7 @@ function Index() {
               </div>
               <div className="bl-step">
                 <h3>Your recruiter calls</h3>
-                <p>5 minutes later, from a (407) number. They confirm your experience and tell you exactly what you qualify for.</p>
+                <p>5 minutes later, from a (816) number. They confirm your experience and tell you exactly what you qualify for.</p>
               </div>
               <div className="bl-step">
                 <h3>Pick your truck and go</h3>

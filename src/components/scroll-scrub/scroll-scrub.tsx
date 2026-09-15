@@ -14,9 +14,9 @@ export interface ScrollScrubScene {
   mobilePoster?: string;
   clip: string;
   mobileClip?: string;
-  title: string;
-  body: string;
-  kicker?: string;
+  title: ReactNode;
+  body: ReactNode;
+  kicker?: ReactNode;
   tags?: string[];
   actions?: ReactNode;
   align?: "left" | "right";

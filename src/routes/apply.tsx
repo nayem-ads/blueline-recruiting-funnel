@@ -176,7 +176,7 @@ function Apply() {
           {step === 6 ? (
             <form onSubmit={onSubmit} noValidate>
               <h1>Where should your recruiter call?</h1>
-              <p className="bl-quiz__hint">You will get a call from a (407) number within 5 minutes during working hours.</p>
+              <p className="bl-quiz__hint">You will get a call from a (816) number within 5 minutes during working hours.</p>
               <div className="bl-row2">
                 <label className="bl-field">
                   <span>First name</span>
