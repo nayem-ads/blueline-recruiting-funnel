@@ -4,6 +4,10 @@
   isolation: isolate;
   color: var(--ss-ink);
   background: var(--ss-bg);
+  overflow-x: clip;
+  width: 100%;
+  max-width: 100%;
+  touch-action: pan-y;
 }
 
 .scroll-scrub__stage {
@@ -11,9 +15,15 @@
   top: 0;
   z-index: 0;
   width: 100%;
+  max-width: 100%;
   height: 100dvh;
   overflow: hidden;
   background: var(--ss-bg);
+  touch-action: pan-y;
+  contain: strict;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
 }
 
 .scroll-scrub__media,
@@ -25,8 +35,10 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
+  contain: strict;
+  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
@@ -129,11 +141,18 @@
   z-index: 3;
   margin-top: -100dvh;
   pointer-events: none;
+  overflow-x: clip;
+  width: 100%;
+  max-width: 100%;
 }
 
 .scroll-scrub__chapter,
 .scroll-scrub__connector-band {
   position: relative;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+  box-sizing: border-box;
 }
 
 .scroll-scrub__chapter-pin {
@@ -142,6 +161,9 @@
   display: flex;
   align-items: center;
   min-height: 100dvh;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: clamp(5rem, 9vw, 8rem) clamp(1.25rem, 6vw, 6rem);
   pointer-events: none;
 }
@@ -153,13 +175,16 @@
 .scroll-scrub__copy {
   position: relative;
   width: min(40rem, 48vw);
+  max-width: 100%;
   pointer-events: auto;
+  box-sizing: border-box;
 }
 
 .scroll-scrub__copy::before {
   position: absolute;
   z-index: -1;
-  inset: -3rem -5rem;
+  inset: -2rem -1rem;
+  max-width: 100%;
   content: "";
   background: radial-gradient(
     ellipse at center,
@@ -253,10 +278,13 @@
 
   .scroll-scrub__copy {
     width: min(100%, 36rem);
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .scroll-scrub__copy::before {
-    inset: -2.5rem -1.5rem;
+    inset: -1.5rem -0.5rem;
+    max-width: 100%;
     background: linear-gradient(
       to top,
       var(--ss-bg) 0%,

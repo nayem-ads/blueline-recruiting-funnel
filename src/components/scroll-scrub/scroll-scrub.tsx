@@ -481,18 +481,17 @@ export function ScrollScrub({
         if (!video || !segment.ready) {
           continue;
         }
-        if (
-          !segment.visible &&
-          Math.abs(segment.current - segment.target) < 0.002
-        ) {
+        if (!segment.visible) {
+          segment.current = segment.target;
+          segment.pendingTarget = null;
           continue;
         }
 
-        const lerpRate = isMobile() ? 0.38 : 0.25;
+        const lerpRate = isMobile() ? 0.6 : 0.35;
         segment.current += (segment.target - segment.current) * lerpRate;
         const targetTime =
           clamp(segment.current, 0, 0.999) * (video.duration || 1);
-        const epsilon = isMobile() ? 0.01 : 0.005;
+        const epsilon = isMobile() ? 0.012 : 0.005;
         if (Math.abs(video.currentTime - targetTime) > epsilon) {
           if (!video.seeking) {
             segment.pendingTarget = null;
