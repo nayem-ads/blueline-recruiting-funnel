@@ -1,29 +1,29 @@
-import postgres from "postgres";
-
-let sqlInstance: postgres.Sql | null = null;
+// Safe dynamic Postgres connection
+let sqlInstance: any = null;
 let initPromise: Promise<void> | undefined;
 
-export function getDb(): postgres.Sql | null {
+export async function getDb(): Promise<any | null> {
   if (sqlInstance) return sqlInstance;
-  const databaseUrl = process.env.DATABASE_URL;
+  const databaseUrl = typeof process !== "undefined" ? process.env?.DATABASE_URL : undefined;
   if (!databaseUrl) {
     return null;
   }
   try {
+    const postgres = (await import("postgres")).default;
     sqlInstance = postgres(databaseUrl, {
-      max: 10,
+      max: 5,
       idle_timeout: 20,
       connect_timeout: 10,
     });
     return sqlInstance;
   } catch (err) {
-    console.error("Failed to connect to Postgres:", err);
+    console.error("[db] Failed to initialize Postgres connection:", err);
     return null;
   }
 }
 
 export async function initializeDatabase() {
-  const db = getDb();
+  const db = await getDb();
   if (!db) return;
   if (!initPromise) {
     initPromise = (async () => {
@@ -47,7 +47,7 @@ export async function initializeDatabase() {
         await db`CREATE INDEX IF NOT EXISTS idx_leads_created_at ON leads(created_at)`;
         console.log("✓ Database initialized: leads table ready");
       } catch (error) {
-        console.error("✗ Database init failed:", error);
+        console.error("[db] Database schema init failed (non-fatal):", error);
       }
     })();
   }

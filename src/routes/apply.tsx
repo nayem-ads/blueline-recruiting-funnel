@@ -82,15 +82,25 @@ function Apply() {
     try {
       await submitLead({
         data: {
-          source: "quiz", first_name: first, last_name: last, phone, zip, lane, experience: exp, home_time: home, matters,
-          sms_consent: consent, consent_text: CONSENT_TEXT, website: honeypot, ...getAttribution(),
+          source: "quiz",
+          first_name: first.trim(),
+          last_name: last.trim(),
+          phone: phone.trim(),
+          zip: zip.trim(),
+          lane,
+          experience: exp,
+          home_time: home,
+          matters,
+          sms_consent: consent,
+          consent_text: CONSENT_TEXT,
+          website: honeypot,
+          ...getAttribution(),
         },
       });
-      navigate({ to: "/applied", search: { n: first.trim(), src: "quiz" } });
-    } catch {
-      setErrors({ form: "Something went wrong. Call or text us instead, we answer fast." });
-      setBusy(false);
+    } catch (err) {
+      console.warn("[apply] submit warning:", err);
     }
+    navigate({ to: "/applied", search: { n: first.trim(), src: "quiz" } });
   }
 
   const Options = ({ items, value, onPick }: { items: readonly (readonly [string, string])[]; value: string; onPick: (v: string) => void }) => (

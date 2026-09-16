@@ -14,11 +14,11 @@ export interface Lead {
 }
 
 export async function saveLead(lead: Lead): Promise<Lead | null> {
-  const db = getDb();
-  if (!db) {
-    return null;
-  }
   try {
+    const db = await getDb();
+    if (!db) {
+      return null;
+    }
     await initializeDatabase();
     const result = await db`
       INSERT INTO leads (name, email, phone, company, source, message, status)
@@ -29,7 +29,7 @@ export async function saveLead(lead: Lead): Promise<Lead | null> {
     `;
     return (result[0] as Lead) || null;
   } catch (error) {
-    console.error("Error saving lead to Postgres:", error);
+    console.error("[leads] Postgres saveLead failed (non-fatal):", error);
     return null;
   }
 }

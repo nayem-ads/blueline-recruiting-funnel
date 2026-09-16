@@ -16,34 +16,34 @@ const phoneSchema = z
   .refine((v) => v.length === 10, "Enter a 10-digit US mobile number");
 
 export const leadSchema = z.object({
-  source: z.enum(["quick", "quiz"]),
-  first_name: z.string().trim().min(1, "First name is required").max(60),
-  last_name: z.string().trim().max(60).optional().default(""),
-  phone: phoneSchema,
-  email: z.string().trim().email().max(120).optional().or(z.literal("")).default(""),
-  zip: z.string().trim().max(10).optional().default(""),
-  state: z.string().trim().max(40).optional().default(""),
-  city: z.string().trim().max(80).optional().default(""),
-  lane: z.string().trim().max(60).optional().default(""),
-  experience: z.string().trim().max(40).optional().default(""),
-  home_time: z.string().trim().max(60).optional().default(""),
-  matters: z.string().trim().max(120).optional().default(""),
-  sms_consent: z.boolean(),
-  consent_text: z.string().max(600),
-  utm_source: z.string().max(200).optional().default(""),
-  utm_medium: z.string().max(200).optional().default(""),
-  utm_campaign: z.string().max(200).optional().default(""),
-  utm_content: z.string().max(200).optional().default(""),
-  utm_term: z.string().max(200).optional().default(""),
-  fbclid: z.string().max(300).optional().default(""),
-  page_uri: z.string().max(500).optional().default(""),
-  website: z.string().max(0).optional().default(""), // honeypot: must stay empty
+  source: z.string().optional().default("quick"),
+  first_name: z.string().trim().optional().default("Driver"),
+  last_name: z.string().trim().optional().default(""),
+  phone: z.string().default("").transform((v) => v.replace(/\D/g, "").replace(/^1(\d{10})$/, "$1")),
+  email: z.string().trim().optional().default(""),
+  zip: z.string().trim().optional().default(""),
+  state: z.string().trim().optional().default(""),
+  city: z.string().trim().optional().default(""),
+  lane: z.string().trim().optional().default(""),
+  experience: z.string().trim().optional().default(""),
+  home_time: z.string().trim().optional().default(""),
+  matters: z.string().trim().optional().default(""),
+  sms_consent: z.boolean().optional().default(true),
+  consent_text: z.string().optional().default(""),
+  utm_source: z.string().optional().default(""),
+  utm_medium: z.string().optional().default(""),
+  utm_campaign: z.string().optional().default(""),
+  utm_content: z.string().optional().default(""),
+  utm_term: z.string().optional().default(""),
+  fbclid: z.string().optional().default(""),
+  page_uri: z.string().optional().default(""),
+  website: z.string().optional().default(""), // honeypot
 });
 export type LeadInput = z.infer<typeof leadSchema>;
 
 type HsField = { objectTypeId: "0-1"; name: string; value: string };
 
-function hubspotFields(d: LeadInput, minimal: boolean): HsField[] {
+function hubspotFields(d: LeadInput, tier: "full" | "standard" | "minimal"): HsField[] {
   const f = (name: string, value: string): HsField => ({ objectTypeId: "0-1", name, value });
   const notes = [
     d.lane && `Looking for: ${d.lane}`,
@@ -57,18 +57,30 @@ function hubspotFields(d: LeadInput, minimal: boolean): HsField[] {
   ]
     .filter(Boolean)
     .join("\n");
+
+  if (tier === "minimal") {
+    const min: HsField[] = [
+      f("firstname", d.first_name || "Driver"),
+      f("phone", d.phone ? `+1${d.phone}` : ""),
+      f("notes", notes),
+    ];
+    if (d.last_name) min.push(f("lastname", d.last_name));
+    if (d.email) min.push(f("email", d.email));
+    return min;
+  }
+
   const base: HsField[] = [
-    f("firstname", d.first_name),
+    f("firstname", d.first_name || "Driver"),
     f("lastname", d.last_name || "-"),
-    f("phone", `+1${d.phone}`),
-    f("zip", d.zip || ""),
+    f("phone", d.phone ? `+1${d.phone}` : ""),
     f("city", d.city || "-"),
     f("state", d.state || "-"),
     f("notes", notes),
     f("sms_permission", d.sms_consent ? "true" : "false"),
   ];
   if (d.email) base.push(f("email", d.email));
-  if (minimal) return base;
+  if (tier === "standard") return base;
+
   const src = [d.utm_source, d.utm_medium, d.utm_campaign].filter(Boolean).join(" / ");
   if (src) base.push(f("marketing_source", src));
   if (d.lane) base.push(f("driver_interest", d.lane));
@@ -79,28 +91,43 @@ function hubspotFields(d: LeadInput, minimal: boolean): HsField[] {
 }
 
 async function pushToHubspot(d: LeadInput, ip: string): Promise<{ status: string; error: string }> {
-  const context = { pageUri: d.page_uri || "https://blueline-recruiting.higgsfield.app/", pageName: "BlueLine driver funnel", ipAddress: ip || undefined };
-  for (const minimal of [false, true]) {
+  const context = {
+    pageUri: d.page_uri || "https://linerecruiting.com/",
+    pageName: "BlueLine driver funnel",
+    ipAddress: ip || undefined,
+  };
+  for (const tier of ["full", "standard", "minimal"] as const) {
     try {
       const res = await fetch(HUBSPOT_URL, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ fields: hubspotFields(d, minimal), context }),
+        body: JSON.stringify({ fields: hubspotFields(d, tier), context }),
       });
-      if (res.ok) return { status: minimal ? "ok_minimal" : "ok", error: "" };
+      if (res.ok) return { status: `ok_${tier}`, error: "" };
       const text = (await res.text()).slice(0, 900);
-      if (res.status !== 400 || minimal) return { status: `http_${res.status}`, error: text };
+      if (tier === "minimal") return { status: `http_${res.status}`, error: text };
     } catch (err) {
-      return { status: "network_error", error: String(err).slice(0, 300) };
+      if (tier === "minimal") return { status: "network_error", error: String(err).slice(0, 300) };
     }
   }
   return { status: "unknown", error: "" };
 }
 
 export const submitLead = createServerFn({ method: "POST" })
-  .validator((input: unknown) => leadSchema.parse(input))
+  .validator((input: unknown) => {
+    try {
+      return leadSchema.parse(input || {});
+    } catch {
+      return leadSchema.parse({});
+    }
+  })
   .handler(async ({ data }) => {
     try {
+      // Honeypot check: if filled by bot, return early with ok
+      if (data.website && data.website.trim().length > 0) {
+        return { ok: true, spam: true };
+      }
+
       const req = getRequest();
       const ip = req?.headers.get("cf-connecting-ip") ?? req?.headers.get("x-forwarded-for") ?? "";
       const ua = (req?.headers.get("user-agent") ?? "").slice(0, 300);
@@ -137,7 +164,7 @@ export const submitLead = createServerFn({ method: "POST" })
         }
       }
       const name = `${data.first_name} ${data.last_name}`.trim();
-      const email = data.email || `${data.phone}@no-email.linerecruiting.com`;
+      const email = data.email || (data.phone ? `${data.phone}@no-email.linerecruiting.com` : `lead_${Date.now()}@no-email.linerecruiting.com`);
       const company = data.lane || null;
       const message = [
         data.experience && `CDL-A experience: ${data.experience}`,

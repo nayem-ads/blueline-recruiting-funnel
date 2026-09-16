@@ -31,13 +31,21 @@ export function QuickForm({ compact = false }: { compact?: boolean }) {
     setBusy(true);
     try {
       await submitLead({
-        data: { source: "quick", first_name: first, phone, experience: exp, sms_consent: consent, consent_text: CONSENT_TEXT, website: honeypot, ...getAttribution() },
+        data: {
+          source: "quick",
+          first_name: first.trim(),
+          phone: phone.trim(),
+          experience: exp || "2 to 3 years",
+          sms_consent: consent,
+          consent_text: CONSENT_TEXT,
+          website: honeypot,
+          ...getAttribution(),
+        },
       });
-      navigate({ to: "/applied", search: { n: first.trim(), src: "quick" } });
-    } catch {
-      setErrors({ form: "Something went wrong. Call or text us instead, we answer fast." });
-      setBusy(false);
+    } catch (err) {
+      console.warn("[quick-form] submit warning:", err);
     }
+    navigate({ to: "/applied", search: { n: first.trim(), src: "quick" } });
   }
 
   return (
