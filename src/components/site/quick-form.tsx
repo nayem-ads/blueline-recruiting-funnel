@@ -11,7 +11,7 @@ export const MIN_EXP_NOTE = "Right now our carriers need 2 years of verifiable C
 
 export function QuickForm({ compact = false }: { compact?: boolean }) {
   const navigate = useNavigate();
-  const [first, setFirst] = useState("");
+  const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [exp, setExp] = useState("");
   const [consent, setConsent] = useState(true);
@@ -21,20 +21,29 @@ export function QuickForm({ compact = false }: { compact?: boolean }) {
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const next: Record<string, string> = {};
-    if (!first.trim()) next.first = "Tell us your first name";
-    if (phone.replace(/\D/g, "").replace(/^1(\d{10})$/, "$1").length !== 10) next.phone = "Enter a 10-digit US mobile number";
+    if (!fullName.trim()) next.fullName = "Tell us your full name";
+    const phoneClean = phone.replace(/\D/g, "").replace(/^1(\d{10})$/, "$1");
+    if (phoneClean.length !== 10) next.phone = "Enter a 10-digit US mobile number";
     if (!exp) next.exp = "Pick the closest option";
     if (!consent) next.consent = "Tick the box so a recruiter can call and text you";
     setErrors(next);
     if (Object.keys(next).length) return;
+
     const honeypot = (e.currentTarget.elements.namedItem("website") as HTMLInputElement | null)?.value ?? "";
     setBusy(true);
+
+    const parts = fullName.trim().split(/\s+/);
+    const firstName = parts[0] || "Driver";
+    const lastName = parts.slice(1).join(" ") || "";
+
     try {
       await submitLead({
         data: {
           source: "quick",
-          first_name: first.trim(),
-          phone: phone.trim(),
+          full_name: fullName.trim(),
+          first_name: firstName,
+          last_name: lastName,
+          phone: phoneClean,
           experience: exp || "2 to 3 years",
           sms_consent: consent,
           consent_text: CONSENT_TEXT,
@@ -43,9 +52,30 @@ export function QuickForm({ compact = false }: { compact?: boolean }) {
         },
       });
     } catch (err) {
-      console.warn("[quick-form] submit warning:", err);
+      console.warn("[quick-form] RPC warning, firing direct HubSpot fallback:", err);
+      try {
+        await fetch("https://api.hsforms.com/submissions/v3/integration/submit/50966263/a09aa246-2380-4477-b243-f04c799c3457", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            fields: [
+              { objectTypeId: "0-1", name: "firstname", value: firstName },
+              { objectTypeId: "0-1", name: "lastname", value: lastName || "-" },
+              { objectTypeId: "0-1", name: "phone", value: `+1${phoneClean}` },
+              { objectTypeId: "0-1", name: "experience", value: exp || "2 to 3 years" },
+              { objectTypeId: "0-1", name: "sms_permission", value: consent ? "true" : "false" },
+            ],
+            context: {
+              pageUri: typeof window !== "undefined" ? window.location.href : "https://linerecruiting.com/",
+              pageName: "BlueLine quick apply",
+            },
+          }),
+        });
+      } catch (clientErr) {
+        console.warn("[quick-form] direct HubSpot fallback caught:", clientErr);
+      }
     }
-    navigate({ to: "/applied", search: { n: first.trim(), src: "quick" } });
+    navigate({ to: "/applied", search: { n: firstName, src: "quick" } });
   }
 
   return (
@@ -57,13 +87,31 @@ export function QuickForm({ compact = false }: { compact?: boolean }) {
         </>
       ) : null}
       <label className="bl-field">
-        <span>First name</span>
-        <input className="bl-input" name="first_name" autoComplete="given-name" value={first} onChange={(e) => setFirst(e.target.value)} aria-invalid={!!errors.first} placeholder="Mike" />
-        {errors.first ? <p className="bl-err">{errors.first}</p> : null}
+        <span>Full name</span>
+        <input
+          className="bl-input"
+          name="full_name"
+          autoComplete="name"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          aria-invalid={!!errors.fullName}
+          placeholder="e.g. Mike Smith"
+        />
+        {errors.fullName ? <p className="bl-err">{errors.fullName}</p> : null}
       </label>
       <label className="bl-field">
         <span>Mobile number</span>
-        <input className="bl-input" name="phone" type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} aria-invalid={!!errors.phone} placeholder="(555) 555-5555" />
+        <input
+          className="bl-input"
+          name="phone"
+          type="tel"
+          inputMode="tel"
+          autoComplete="tel"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          aria-invalid={!!errors.phone}
+          placeholder="(555) 555-5555"
+        />
         {errors.phone ? <p className="bl-err">{errors.phone}</p> : null}
       </label>
       <label className="bl-field">
@@ -88,7 +136,6 @@ export function QuickForm({ compact = false }: { compact?: boolean }) {
         </span>
       </label>
       {errors.consent ? <p className="bl-err" style={{ marginTop: "-0.5rem", marginBottom: "0.75rem" }}>{errors.consent}</p> : null}
-      {errors.form ? <p className="bl-err" style={{ marginBottom: "0.75rem" }}>{errors.form}</p> : null}
       <button className="bl-cta-submit" type="submit" disabled={busy}>
         {busy ? "Sending" : "Get my callback"}
       </button>

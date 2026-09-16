@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { saveLead } from "@/server/leads";
 import { sendBrevoLeadNotification } from "../notifications/brevo.server";
+import { bindings } from "../bindings.server";
 
 // HubSpot portal + form the live linerecruiting.com site already submits to.
 const HUBSPOT_PORTAL = "50966263";
@@ -17,7 +18,8 @@ const phoneSchema = z
 
 export const leadSchema = z.object({
   source: z.string().optional().default("quick"),
-  first_name: z.string().trim().optional().default("Driver"),
+  full_name: z.string().trim().optional().default(""),
+  first_name: z.string().trim().optional().default(""),
   last_name: z.string().trim().optional().default(""),
   phone: z.string().default("").transform((v) => v.replace(/\D/g, "").replace(/^1(\d{10})$/, "$1")),
   email: z.string().trim().optional().default(""),
@@ -45,6 +47,11 @@ type HsField = { objectTypeId: "0-1"; name: string; value: string };
 
 function hubspotFields(d: LeadInput, tier: "full" | "standard" | "minimal"): HsField[] {
   const f = (name: string, value: string): HsField => ({ objectTypeId: "0-1", name, value });
+  const rawFullName = (d.full_name || [d.first_name, d.last_name].filter(Boolean).join(" ") || "").trim();
+  const nameParts = rawFullName.split(/\s+/);
+  const firstName = nameParts[0] || d.first_name || "Driver";
+  const lastName = nameParts.slice(1).join(" ") || d.last_name || "-";
+
   const notes = [
     d.lane && `Looking for: ${d.lane}`,
     d.experience && `CDL-A experience: ${d.experience}`,
@@ -60,18 +67,18 @@ function hubspotFields(d: LeadInput, tier: "full" | "standard" | "minimal"): HsF
 
   if (tier === "minimal") {
     const min: HsField[] = [
-      f("firstname", d.first_name || "Driver"),
+      f("firstname", firstName),
       f("phone", d.phone ? `+1${d.phone}` : ""),
       f("notes", notes),
     ];
-    if (d.last_name) min.push(f("lastname", d.last_name));
+    if (lastName) min.push(f("lastname", lastName));
     if (d.email) min.push(f("email", d.email));
     return min;
   }
 
   const base: HsField[] = [
-    f("firstname", d.first_name || "Driver"),
-    f("lastname", d.last_name || "-"),
+    f("firstname", firstName),
+    f("lastname", lastName),
     f("phone", d.phone ? `+1${d.phone}` : ""),
     f("city", d.city || "-"),
     f("state", d.state || "-"),
@@ -133,6 +140,12 @@ export const submitLead = createServerFn({ method: "POST" })
       const ua = (req?.headers.get("user-agent") ?? "").slice(0, 300);
       const { DB } = bindings();
 
+      const rawFullName = (data.full_name || [data.first_name, data.last_name].filter(Boolean).join(" ") || "").trim();
+      const nameParts = rawFullName ? rawFullName.split(/\s+/) : [];
+      const computedFirst = nameParts[0] || data.first_name || "Driver";
+      const computedLast = nameParts.slice(1).join(" ") || data.last_name || "";
+      const fullName = rawFullName || `${computedFirst} ${computedLast}`.trim();
+
       // Concurrently dispatch HubSpot form submission and Brevo email notification
       const [hsResult, brevoResult] = await Promise.allSettled([
         pushToHubspot(data, ip),
@@ -152,7 +165,7 @@ export const submitLead = createServerFn({ method: "POST" })
              VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15,?16,?17,?18,?19,?20,?21,?22,?23,?24)`,
           )
             .bind(
-              data.source, data.first_name, data.last_name, data.phone, data.email, data.state, data.city, data.lane,
+              data.source, computedFirst, computedLast, data.phone, data.email, data.state, data.city, data.lane,
               data.experience, data.home_time, data.matters, data.sms_consent ? 1 : 0, data.consent_text, data.utm_source,
               data.utm_medium, data.utm_campaign, data.utm_content, data.utm_term, data.fbclid, data.page_uri, ua, ip,
               hs.status, hs.error,
@@ -163,7 +176,6 @@ export const submitLead = createServerFn({ method: "POST" })
           console.error("[leads] Cloudflare D1 insert error:", dbErr);
         }
       }
-      const name = `${data.first_name} ${data.last_name}`.trim();
       const email = data.email || (data.phone ? `${data.phone}@no-email.linerecruiting.com` : `lead_${Date.now()}@no-email.linerecruiting.com`);
       const company = data.lane || null;
       const message = [
@@ -177,7 +189,7 @@ export const submitLead = createServerFn({ method: "POST" })
 
       let savedLead = null;
       try {
-        savedLead = await saveLead({ name, email, phone: data.phone, company, message, source: "form" });
+        savedLead = await saveLead({ name: fullName, email, phone: data.phone, company, message, source: "form" });
       } catch (error) {
         console.error("Failed to persist lead to Postgres:", error);
       }
