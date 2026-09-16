@@ -14,7 +14,7 @@ export function QuickForm({ compact = false }: { compact?: boolean }) {
   const [first, setFirst] = useState("");
   const [phone, setPhone] = useState("");
   const [exp, setExp] = useState("");
-  const [consent, setConsent] = useState(false);
+  const [consent, setConsent] = useState(true);
   const [busy, setBusy] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -24,7 +24,6 @@ export function QuickForm({ compact = false }: { compact?: boolean }) {
     if (!first.trim()) next.first = "Tell us your first name";
     if (phone.replace(/\D/g, "").replace(/^1(\d{10})$/, "$1").length !== 10) next.phone = "Enter a 10-digit US mobile number";
     if (!exp) next.exp = "Pick the closest option";
-    if (exp === UNDER_MIN) next.exp = MIN_EXP_NOTE;
     if (!consent) next.consent = "Tick the box so a recruiter can call and text you";
     setErrors(next);
     if (Object.keys(next).length) return;
@@ -72,11 +71,17 @@ export function QuickForm({ compact = false }: { compact?: boolean }) {
       <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: "absolute", left: -9999, opacity: 0, height: 0 }} />
       <label className="bl-consent">
         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-        <span>{CONSENT_TEXT}</span>
+        <span>
+          {CONSENT_TEXT}{" "}
+          <a href="https://www.linerecruiting.com/privacy" target="_blank" rel="noreferrer" style={{ textDecoration: "underline", color: "inherit" }}>
+            Privacy Policy
+          </a>
+          .
+        </span>
       </label>
       {errors.consent ? <p className="bl-err" style={{ marginTop: "-0.5rem", marginBottom: "0.75rem" }}>{errors.consent}</p> : null}
       {errors.form ? <p className="bl-err" style={{ marginBottom: "0.75rem" }}>{errors.form}</p> : null}
-      <button className="bl-cta-submit" type="submit" disabled={busy || exp === UNDER_MIN}>
+      <button className="bl-cta-submit" type="submit" disabled={busy}>
         {busy ? "Sending" : "Get my callback"}
       </button>
       <p className="bl-note" style={{ marginTop: "0.75rem", marginBottom: 0, fontSize: "0.85rem" }}>

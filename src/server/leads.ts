@@ -1,4 +1,4 @@
-import { db } from "./db";
+import { getDb, initializeDatabase } from "./db";
 
 export interface Lead {
   id?: number;
@@ -13,8 +13,13 @@ export interface Lead {
   updated_at?: string;
 }
 
-export async function saveLead(lead: Lead): Promise<Lead> {
+export async function saveLead(lead: Lead): Promise<Lead | null> {
+  const db = getDb();
+  if (!db) {
+    return null;
+  }
   try {
+    await initializeDatabase();
     const result = await db`
       INSERT INTO leads (name, email, phone, company, source, message, status)
       VALUES (${lead.name}, ${lead.email}, ${lead.phone}, ${lead.company || null}, ${lead.source || "form"}, ${lead.message || null}, ${lead.status || "new"})
@@ -22,9 +27,9 @@ export async function saveLead(lead: Lead): Promise<Lead> {
       SET updated_at = CURRENT_TIMESTAMP, status = 'duplicate'
       RETURNING *
     `;
-    return result[0] as Lead;
+    return (result[0] as Lead) || null;
   } catch (error) {
-    console.error("Error saving lead:", error);
-    throw new Error("Failed to save lead");
+    console.error("Error saving lead to Postgres:", error);
+    return null;
   }
 }

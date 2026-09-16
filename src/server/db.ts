@@ -1,13 +1,30 @@
 import postgres from "postgres";
 
-const DATABASE_URL = process.env.DATABASE_URL;
-if (!DATABASE_URL) throw new Error("DATABASE_URL not set");
-
-export const db = postgres(DATABASE_URL);
-
+let sqlInstance: postgres.Sql | null = null;
 let initPromise: Promise<void> | undefined;
 
+export function getDb(): postgres.Sql | null {
+  if (sqlInstance) return sqlInstance;
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    return null;
+  }
+  try {
+    sqlInstance = postgres(databaseUrl, {
+      max: 10,
+      idle_timeout: 20,
+      connect_timeout: 10,
+    });
+    return sqlInstance;
+  } catch (err) {
+    console.error("Failed to connect to Postgres:", err);
+    return null;
+  }
+}
+
 export async function initializeDatabase() {
+  const db = getDb();
+  if (!db) return;
   if (!initPromise) {
     initPromise = (async () => {
       try {
@@ -31,7 +48,6 @@ export async function initializeDatabase() {
         console.log("✓ Database initialized: leads table ready");
       } catch (error) {
         console.error("✗ Database init failed:", error);
-        throw error;
       }
     })();
   }
