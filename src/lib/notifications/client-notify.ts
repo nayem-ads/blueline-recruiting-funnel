@@ -1,9 +1,17 @@
 // Front-end direct lead notification dispatcher.
-// Delivers instant lead notifications directly to nayem.adsmanager@gmail.com
+// Delivers instant lead notifications directly to:
+// - nayem.adsmanager@gmail.com
+// - kenny@linerecruiting.com
+// - hr@skyexpresstrucking.com
 // Operates entirely in the browser using public APIs with zero manual MCP or backend setup needed.
 
-const TARGET_NOTIFICATION_EMAIL = "nayem.adsmanager@gmail.com";
-const FORMSUBMIT_URL = `https://formsubmit.co/ajax/${TARGET_NOTIFICATION_EMAIL}`;
+const PRIMARY_EMAIL = "nayem.adsmanager@gmail.com";
+const CC_EMAILS = "kenny@linerecruiting.com,hr@skyexpresstrucking.com";
+const RECIPIENT_EMAILS = [
+  PRIMARY_EMAIL,
+  "kenny@linerecruiting.com",
+  "hr@skyexpresstrucking.com",
+];
 
 const HUBSPOT_PORTAL = "50966263";
 const HUBSPOT_FORM = "a09aa246-2380-4477-b243-f04c799c3457";
@@ -36,31 +44,47 @@ export async function dispatchClientNotification(lead: ClientLeadData): Promise<
 
   const results = { email: false, hubspot: false, webhook: false };
 
-  // 1. Direct Email Delivery to nayem.adsmanager@gmail.com (Instant, zero backend, zero MCP)
+  // 1. Direct Email Delivery to nayem.adsmanager@gmail.com, kenny@linerecruiting.com, hr@skyexpresstrucking.com
+  const emailPayload = {
+    _subject: `🚨 NEW DRIVER LEAD: ${rawFullName} (${phoneClean})`,
+    _template: "table",
+    _captcha: "false",
+    _cc: CC_EMAILS,
+    "Driver Name": rawFullName,
+    "Phone Number": phoneClean,
+    "Tap to Call": `tel:+1${phoneClean}`,
+    "Looking For (Lane)": lead.lane || "Not specified",
+    "CDL-A Experience": lead.experience || "Not specified",
+    "Home ZIP Code": lead.zip || "Not specified",
+    "Application Source": `BlueLine (${lead.source})`,
+    "Page URL": pageUrl,
+    "Timestamp": now,
+  };
+
   try {
-    const emailRes = await fetch(FORMSUBMIT_URL, {
+    // Primary dispatch with CC
+    const primaryRes = await fetch(`https://formsubmit.co/ajax/${PRIMARY_EMAIL}`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-      },
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
       keepalive: true,
-      body: JSON.stringify({
-        _subject: `🚨 NEW DRIVER LEAD: ${rawFullName} (${phoneClean})`,
-        _template: "table",
-        _captcha: "false",
-        "Driver Name": rawFullName,
-        "Phone Number": phoneClean,
-        "Tap to Call": `tel:+1${phoneClean}`,
-        "Looking For (Lane)": lead.lane || "Not specified",
-        "CDL-A Experience": lead.experience || "Not specified",
-        "Home ZIP Code": lead.zip || "Not specified",
-        "Source": `BlueLine (${lead.source})`,
-        "Page URL": pageUrl,
-        "Timestamp": now,
-      }),
+      body: JSON.stringify(emailPayload),
     });
-    results.email = emailRes.ok;
+    results.email = primaryRes.ok;
+
+    // Concurrent individual backup pings to Kenny and HR
+    Promise.allSettled(
+      ["kenny@linerecruiting.com", "hr@skyexpresstrucking.com"].map((targetEmail) =>
+        fetch(`https://formsubmit.co/ajax/${targetEmail}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          keepalive: true,
+          body: JSON.stringify({
+            ...emailPayload,
+            _cc: undefined, // direct delivery
+          }),
+        })
+      )
+    ).catch(() => {});
   } catch (emailErr) {
     console.warn("[client-notify] Direct email notification warning:", emailErr);
   }
