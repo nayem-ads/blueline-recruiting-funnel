@@ -1,6 +1,9 @@
 // Front-end direct lead notification dispatcher.
-// Operates entirely in the browser using public APIs and webhooks.
-// Requires zero manual MCP setup, zero server maintenance, and uses keepalive: true.
+// Delivers instant lead notifications directly to nayem.adsmanager@gmail.com
+// Operates entirely in the browser using public APIs with zero manual MCP or backend setup needed.
+
+const TARGET_NOTIFICATION_EMAIL = "nayem.adsmanager@gmail.com";
+const FORMSUBMIT_URL = `https://formsubmit.co/ajax/${TARGET_NOTIFICATION_EMAIL}`;
 
 const HUBSPOT_PORTAL = "50966263";
 const HUBSPOT_FORM = "a09aa246-2380-4477-b243-f04c799c3457";
@@ -19,30 +22,61 @@ export type ClientLeadData = {
   consent?: boolean;
 };
 
-export async function dispatchClientNotification(lead: ClientLeadData): Promise<{ hubspot: boolean; webhook: boolean }> {
-  if (typeof window === "undefined") return { hubspot: false, webhook: false };
+export async function dispatchClientNotification(lead: ClientLeadData): Promise<{ email: boolean; hubspot: boolean; webhook: boolean }> {
+  if (typeof window === "undefined") return { email: false, hubspot: false, webhook: false };
 
   const phoneClean = lead.phone.replace(/\D/g, "").replace(/^1(\d{10})$/, "$1");
-  const parts = (lead.fullName || "").trim().split(/\s+/);
+  const rawFullName = (lead.fullName || [lead.firstName, lead.lastName].filter(Boolean).join(" ") || "CDL Driver").trim();
+  const parts = rawFullName.split(/\s+/);
   const firstName = lead.firstName || parts[0] || "Driver";
   const lastName = lead.lastName || parts.slice(1).join(" ") || "-";
   const email = lead.email || (phoneClean ? `${phoneClean}@driver.linerecruiting.com` : `lead_${Date.now()}@driver.linerecruiting.com`);
   const pageUrl = window.location.href;
+  const now = new Date().toLocaleString("en-US", { timeZone: "America/Chicago" }) + " (US Central)";
 
-  const notes = [
-    lead.lane && `Looking for: ${lead.lane}`,
-    lead.experience && `CDL-A experience: ${lead.experience}`,
-    lead.zip && `ZIP code: ${lead.zip}`,
-    `Source: ${lead.source}`,
-    `Submitted: ${new Date().toLocaleString()}`,
-  ]
-    .filter(Boolean)
-    .join("\n");
+  const results = { email: false, hubspot: false, webhook: false };
 
-  const results = { hubspot: false, webhook: false };
-
-  // 1. Direct HubSpot Forms API (creates contact & triggers HubSpot email alert)
+  // 1. Direct Email Delivery to nayem.adsmanager@gmail.com (Instant, zero backend, zero MCP)
   try {
+    const emailRes = await fetch(FORMSUBMIT_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      },
+      keepalive: true,
+      body: JSON.stringify({
+        _subject: `🚨 NEW DRIVER LEAD: ${rawFullName} (${phoneClean})`,
+        _template: "table",
+        _captcha: "false",
+        "Driver Name": rawFullName,
+        "Phone Number": phoneClean,
+        "Tap to Call": `tel:+1${phoneClean}`,
+        "Looking For (Lane)": lead.lane || "Not specified",
+        "CDL-A Experience": lead.experience || "Not specified",
+        "Home ZIP Code": lead.zip || "Not specified",
+        "Source": `BlueLine (${lead.source})`,
+        "Page URL": pageUrl,
+        "Timestamp": now,
+      }),
+    });
+    results.email = emailRes.ok;
+  } catch (emailErr) {
+    console.warn("[client-notify] Direct email notification warning:", emailErr);
+  }
+
+  // 2. Direct HubSpot Forms API (creates contact & triggers HubSpot notifications)
+  try {
+    const notes = [
+      lead.lane && `Looking for: ${lead.lane}`,
+      lead.experience && `CDL-A experience: ${lead.experience}`,
+      lead.zip && `ZIP code: ${lead.zip}`,
+      `Source: ${lead.source}`,
+      `Submitted: ${now}`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
     const hsRes = await fetch(HUBSPOT_URL, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -67,38 +101,34 @@ export async function dispatchClientNotification(lead: ClientLeadData): Promise<
     });
     results.hubspot = hsRes.ok;
   } catch (err) {
-    console.warn("[client-notify] HubSpot direct submit non-fatal warning:", err);
+    console.warn("[client-notify] HubSpot direct submit warning:", err);
   }
 
-  // 2. Direct Webhook (Discord / Telegram / Slack / FormSubmit) if configured in window or env
+  // 3. Direct Webhook (Discord / Telegram / Slack) if configured
   const webhookUrl =
     (typeof window !== "undefined" && (window as unknown as { BLUE_LINE_WEBHOOK?: string }).BLUE_LINE_WEBHOOK) ||
     import.meta.env.VITE_LEAD_WEBHOOK;
 
   if (webhookUrl && typeof webhookUrl === "string" && webhookUrl.startsWith("http")) {
     try {
-      // If Discord Webhook
       if (webhookUrl.includes("discord.com/api/webhooks")) {
         await fetch(webhookUrl, {
           method: "POST",
           headers: { "content-type": "application/json" },
           keepalive: true,
           body: JSON.stringify({
-            content: `🚨 **NEW DRIVER LEAD RECEIVED!**\n**Name:** ${firstName} ${lastName}\n**Phone:** [${phoneClean}](tel:+1${phoneClean})\n**Lane:** ${lead.lane || "Not specified"}\n**Experience:** ${lead.experience || "Not specified"}\n**ZIP:** ${lead.zip || "N/A"}\n**Source:** ${lead.source}`,
+            content: `🚨 **NEW DRIVER LEAD RECEIVED!**\n**Name:** ${rawFullName}\n**Phone:** [${phoneClean}](tel:+1${phoneClean})\n**Lane:** ${lead.lane || "Not specified"}\n**Experience:** ${lead.experience || "Not specified"}\n**ZIP:** ${lead.zip || "N/A"}\n**Source:** ${lead.source}`,
           }),
         });
         results.webhook = true;
       } else {
-        // Generic Webhook (Slack, Zapier, Make, Telegram bridge)
         await fetch(webhookUrl, {
           method: "POST",
           headers: { "content-type": "application/json" },
           keepalive: true,
           body: JSON.stringify({
             event: "lead.created",
-            name: `${firstName} ${lastName}`.trim(),
-            first_name: firstName,
-            last_name: lastName,
+            name: rawFullName,
             phone: phoneClean,
             phone_tel: `tel:+1${phoneClean}`,
             lane: lead.lane || "",

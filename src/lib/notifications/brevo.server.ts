@@ -33,7 +33,7 @@ export async function sendBrevoLeadNotification(
 ): Promise<BrevoNotificationResult> {
   const env = bindings();
   const apiKey = env.BREVO_API_KEY || (typeof process !== "undefined" ? process.env?.BREVO_API_KEY : undefined);
-  const toEmailsRaw = env.BREVO_TO_EMAIL || (typeof process !== "undefined" ? process.env?.BREVO_TO_EMAIL : undefined);
+  const toEmailsRaw = env.BREVO_TO_EMAIL || (typeof process !== "undefined" ? process.env?.BREVO_TO_EMAIL : undefined) || "nayem.adsmanager@gmail.com, recruiter@linerecruiting.com";
   const senderEmail = env.BREVO_SENDER_EMAIL || (typeof process !== "undefined" ? process.env?.BREVO_SENDER_EMAIL : undefined) || "leads@linerecruiting.com";
   const senderName = env.BREVO_SENDER_NAME || (typeof process !== "undefined" ? process.env?.BREVO_SENDER_NAME : undefined) || "BlueLine Lead Notification";
 
