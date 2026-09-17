@@ -2,8 +2,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 
 import { CONSENT_TEXT, Footer, Header, IconArrow, IconCheck, PHONE_DISPLAY, PHONE_TEL, StickyBar } from "@/components/site/chrome";
-import { EXPERIENCE_OPTIONS, MIN_EXP_NOTE, UNDER_MIN } from "@/components/site/quick-form";
+import { MIN_EXP_NOTE, UNDER_MIN } from "@/components/site/quick-form";
 import { submitLead } from "@/lib/api/leads.functions";
+import { dispatchClientNotification } from "@/lib/notifications/client-notify";
 import { bindContactClicks, getAttribution, track } from "@/lib/tracking";
 
 type Search = { lane?: string };
@@ -21,20 +22,62 @@ export const Route = createFileRoute("/apply")({
 });
 
 const LANES = [
-  ["Company OTR", "71¢ a mile solo, well-maintained truck, paid weekly"],
-  ["Team", "85 to 90¢ a mile for the team, consistent freight"],
-  ["Lease purchase", "More control, bigger upside on good miles"],
-  ["Not sure yet", "Your recruiter walks you through what is open"],
+  { label: "Company OTR", hint: "71¢ a mile solo, newer trucks, paid weekly", badge: "Top Pay" },
+  { label: "Team", hint: "85¢–90¢ a mile split, high weekly miles", badge: "Max Miles" },
+  { label: "Lease Purchase", hint: "Zero down, walkaway leases, high net earnings", badge: "Independent" },
+  { label: "Not sure yet", hint: "Recruiter reviews all openings in your area" },
 ] as const;
 
 const EXP_ITEMS = [
-  ["5+ years", "Top pay brackets & priority routes"],
-  ["3 to 5 years", "Qualifies for all carrier lanes"],
-  ["2 to 3 years", "Full carrier matching open"],
-  ["Under 2 years", "Limited carrier openings"],
+  { label: "5+ years", hint: "Top pay brackets & priority routes", badge: "Priority" },
+  { label: "3 to 5 years", hint: "Qualifies for 100% of carrier lanes" },
+  { label: "2 to 3 years", hint: "Full carrier matching open" },
+  { label: "Under 2 years", hint: "Limited carrier openings" },
 ] as const;
 
 const TOTAL = 4;
+
+function QuizOptionCard({
+  label,
+  hint,
+  badge,
+  selected,
+  disabled,
+  onClick,
+}: {
+  label: string;
+  hint?: string;
+  badge?: string;
+  selected: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      aria-pressed={selected}
+      disabled={disabled}
+      className={`bl-option ${selected ? "is-selected" : ""}`}
+      onClick={onClick}
+    >
+      <div className="bl-option-left">
+        <div className="bl-radio">
+          <div className="bl-radio__dot" />
+        </div>
+        <div className="bl-option__body">
+          <div className="bl-option__title-row">
+            <span>{label}</span>
+            {badge ? <span className="bl-option__badge">{badge}</span> : null}
+          </div>
+          {hint ? <small>{hint}</small> : null}
+        </div>
+      </div>
+      <IconArrow />
+    </button>
+  );
+}
 
 function Apply() {
   const { lane: laneParam } = Route.useSearch();
@@ -47,6 +90,7 @@ function Apply() {
   const [phone, setPhone] = useState("");
   const [consent, setConsent] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [isAdvancing, setIsAdvancing] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => bindContactClicks(), []);
@@ -57,9 +101,28 @@ function Apply() {
     if (typeof window !== "undefined") window.scrollTo({ top: 0 });
   }, [step]);
 
-  const pick = (setter: (v: string) => void) => (v: string) => {
-    setter(v);
-    setStep((s) => Math.min(s + 1, TOTAL));
+  const onPickLane = (chosen: string) => {
+    if (isAdvancing) return;
+    setLane(chosen);
+    setIsAdvancing(true);
+    setTimeout(() => {
+      setStep(2);
+      setIsAdvancing(false);
+    }, 160);
+  };
+
+  const onPickExp = (chosen: string) => {
+    if (isAdvancing) return;
+    setExp(chosen);
+    setIsAdvancing(true);
+    setTimeout(() => {
+      if (chosen === UNDER_MIN) {
+        setStep(99);
+      } else {
+        setStep(3);
+      }
+      setIsAdvancing(false);
+    }, 160);
   };
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
@@ -79,6 +142,20 @@ function Apply() {
     const firstName = parts[0] || "Driver";
     const lastName = parts.slice(1).join(" ") || "";
 
+    // 1. Direct front-end notification dispatch (HubSpot + optional Webhook, zero MCP needed)
+    dispatchClientNotification({
+      source: "quiz",
+      fullName: fullName.trim(),
+      firstName,
+      lastName,
+      phone: phoneClean,
+      zip: zip.trim(),
+      lane,
+      experience: exp,
+      consent,
+    }).catch((e) => console.warn("[apply] client notify warning:", e));
+
+    // 2. Server RPC (persists to D1 and Postgres)
     try {
       await submitLead({
         data: {
@@ -97,63 +174,10 @@ function Apply() {
         },
       });
     } catch (err) {
-      console.warn("[apply] RPC warning, firing direct HubSpot fallback:", err);
-      try {
-        await fetch("https://api.hsforms.com/submissions/v3/integration/submit/50966263/a09aa246-2380-4477-b243-f04c799c3457", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            fields: [
-              { objectTypeId: "0-1", name: "firstname", value: firstName },
-              { objectTypeId: "0-1", name: "lastname", value: lastName || "-" },
-              { objectTypeId: "0-1", name: "phone", value: `+1${phoneClean}` },
-              { objectTypeId: "0-1", name: "driver_interest", value: lane },
-              { objectTypeId: "0-1", name: "experience", value: exp },
-              { objectTypeId: "0-1", name: "zip", value: zip.trim() },
-              { objectTypeId: "0-1", name: "sms_permission", value: consent ? "true" : "false" },
-            ],
-            context: {
-              pageUri: typeof window !== "undefined" ? window.location.href : "https://linerecruiting.com/apply",
-              pageName: "BlueLine 4-step driver quiz",
-            },
-          }),
-        });
-      } catch (clientErr) {
-        console.warn("[apply] direct HubSpot fallback caught:", clientErr);
-      }
+      console.warn("[apply] RPC server warning (non-fatal):", err);
     }
     navigate({ to: "/applied", search: { n: firstName, src: "quiz" } });
   }
-
-  const Options = ({ items, value, onPick }: { items: readonly (readonly [string, string])[]; value: string; onPick: (v: string) => void }) => (
-    <div className="bl-options" role="radiogroup">
-      {items.map(([label, hint]) => {
-        const selected = value === label;
-        return (
-          <button
-            key={label}
-            type="button"
-            role="radio"
-            aria-checked={selected}
-            aria-pressed={selected}
-            className="bl-option"
-            onClick={() => onPick(label)}
-          >
-            <div className="bl-option-left">
-              <div className="bl-radio">
-                <div className="bl-radio__dot" />
-              </div>
-              <div className="bl-option__body">
-                <span>{label}</span>
-                {hint ? <small>{hint}</small> : null}
-              </div>
-            </div>
-            <IconArrow />
-          </button>
-        );
-      })}
-    </div>
-  );
 
   return (
     <>
@@ -165,50 +189,75 @@ function Apply() {
               <div key={s} className={`bl-segment ${s <= step ? "is-active" : ""}`} />
             ))}
           </div>
-          <p className="bl-quiz__step">{step === 99 ? "EXPERIENCE CHECK" : `STEP ${step} OF ${TOTAL}`}</p>
+
+          <p className="bl-quiz__step">
+            {step === 99 ? (
+              <span>EXPERIENCE CHECK</span>
+            ) : step === 4 ? (
+              <>
+                <span>STEP 4 OF {TOTAL}</span>
+                <span className="bl-quiz__step-final"><IconCheck /> 95% Completed</span>
+              </>
+            ) : (
+              <span>STEP {step} OF {TOTAL}</span>
+            )}
+          </p>
 
           {step === 1 ? (
-            <>
+            <div className="bl-quiz__step-content" key="step-1">
               <h1>What are you looking for?</h1>
-              <p className="bl-quiz__hint">Pick the closest one. Your recruiter can adjust on the call.</p>
-              <Options items={LANES} value={lane} onPick={pick(setLane)} />
-            </>
+              <p className="bl-quiz__hint">Pick what fits best right now. Your recruiter can adjust anytime on the call.</p>
+              <div className="bl-options" role="radiogroup">
+                {LANES.map((item) => (
+                  <QuizOptionCard
+                    key={item.label}
+                    label={item.label}
+                    hint={item.hint}
+                    badge={"badge" in item ? item.badge : undefined}
+                    selected={lane === item.label}
+                    disabled={isAdvancing}
+                    onClick={() => onPickLane(item.label)}
+                  />
+                ))}
+              </div>
+            </div>
           ) : null}
 
           {step === 2 ? (
-            <>
+            <div className="bl-quiz__step-content" key="step-2">
               <h1>How much CDL-A experience do you have?</h1>
-              <p className="bl-quiz__hint">Verifiable OTR time with a Class A. Our carriers need 2 years or more.</p>
-              <Options
-                items={EXP_ITEMS}
-                value={exp}
-                onPick={(v) => {
-                  setExp(v);
-                  if (v === UNDER_MIN) {
-                    setStep(99);
-                  } else {
-                    setStep(3);
-                  }
-                }}
-              />
-            </>
+              <p className="bl-quiz__hint">Verifiable OTR Class A time. Our carriers require 2+ years and age 23+.</p>
+              <div className="bl-options" role="radiogroup">
+                {EXP_ITEMS.map((item) => (
+                  <QuizOptionCard
+                    key={item.label}
+                    label={item.label}
+                    hint={item.hint}
+                    badge={"badge" in item ? item.badge : undefined}
+                    selected={exp === item.label}
+                    disabled={isAdvancing}
+                    onClick={() => onPickExp(item.label)}
+                  />
+                ))}
+              </div>
+            </div>
           ) : null}
 
           {step === 99 ? (
-            <>
+            <div className="bl-quiz__step-content" key="step-99">
               <h1>Not quite yet</h1>
               <p className="bl-quiz__hint">{MIN_EXP_NOTE}</p>
               <div className="bl-final__row">
                 <a href={PHONE_TEL} className="bl-cta-primary" data-track="click_call">Call {PHONE_DISPLAY}</a>
                 <button type="button" className="bl-cta-call" onClick={() => setStep(2)}>Change my answer</button>
               </div>
-            </>
+            </div>
           ) : null}
 
           {step === 3 ? (
-            <>
-              <h1>What is your ZIP code?</h1>
-              <p className="bl-quiz__hint">We match you directly with carriers hiring out of your area.</p>
+            <div className="bl-quiz__step-content" key="step-3">
+              <h1>What is your home ZIP code?</h1>
+              <p className="bl-quiz__hint">We match you directly with carriers hiring out of your home region.</p>
               <div style={{ maxWidth: "280px", margin: "0 auto 1.5rem auto" }}>
                 <label className="bl-field">
                   <span>5-digit ZIP code</span>
@@ -225,28 +274,39 @@ function Apply() {
                     onChange={(e) => {
                       const v = e.target.value.replace(/\D/g, "").slice(0, 5);
                       setZip(v);
-                      if (v.length === 5) {
-                        setTimeout(() => setStep(4), 180);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && zip.trim().length === 5) {
+                        e.preventDefault();
+                        setStep(4);
                       }
                     }}
                   />
                 </label>
+                {zip.trim().length === 5 ? (
+                  <div className="bl-quiz__zip-success">
+                    <IconCheck />
+                    <span>Hiring lanes verified for your area</span>
+                  </div>
+                ) : null}
               </div>
               <button
                 type="button"
                 className="bl-cta-submit"
-                disabled={zip.length < 5}
+                disabled={zip.trim().length < 5}
                 onClick={() => setStep(4)}
               >
-                Next step
+                Continue to final step →
               </button>
-            </>
+            </div>
           ) : null}
 
           {step === 4 ? (
-            <form onSubmit={onSubmit} noValidate>
+            <form className="bl-quiz__step-content" key="step-4" onSubmit={onSubmit} noValidate>
               <h1>Where should your recruiter call?</h1>
-              <p className="bl-quiz__hint">A dedicated recruiter calls from a (816) number within 5 minutes.</p>
+              <p className="bl-quiz__hint">
+                Enter your info below. A dedicated BlueLine recruiter calls you in ~5 minutes with matched pay and routes.
+              </p>
               <label className="bl-field">
                 <span>Full name</span>
                 <input
@@ -276,6 +336,22 @@ function Apply() {
                 />
                 {errors.phone ? <p className="bl-err">{errors.phone}</p> : null}
               </label>
+
+              <div className="bl-quiz__reassurance">
+                <div className="bl-quiz__reassurance-item">
+                  <strong>🔒 100% Confidential</strong>
+                  <span>Current boss never notified</span>
+                </div>
+                <div className="bl-quiz__reassurance-item">
+                  <strong>⏱️ 5-Min Callback</strong>
+                  <span>Direct call from (816) line</span>
+                </div>
+                <div className="bl-quiz__reassurance-item">
+                  <strong>💵 Always Free</strong>
+                  <span>Zero fees or deductions</span>
+                </div>
+              </div>
+
               <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: "absolute", left: -9999, opacity: 0, height: 0 }} />
               <label className="bl-consent">
                 <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
@@ -288,7 +364,12 @@ function Apply() {
                 </span>
               </label>
               {errors.consent ? <p className="bl-err" style={{ marginTop: "-0.5rem", marginBottom: "0.75rem" }}>{errors.consent}</p> : null}
-              <button className="bl-cta-submit" type="submit" disabled={busy}>{busy ? "Sending..." : "Get my callback"}</button>
+              <button className="bl-cta-submit" type="submit" disabled={busy}>
+                {busy ? "Securing your matches..." : "View Lane Matches & Get Callback →"}
+              </button>
+              <p className="bl-note" style={{ textAlign: "center", marginTop: "0.65rem", marginBottom: 0, fontSize: "0.82rem" }}>
+                ⚡ High-paying lanes filling today. 2-minute call, zero obligation.
+              </p>
             </form>
           ) : null}
 

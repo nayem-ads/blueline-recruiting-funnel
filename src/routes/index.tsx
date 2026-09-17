@@ -132,7 +132,7 @@ function Index() {
               <div>
                 <h3>Experience and license</h3>
                 <ul>
-                  <li>Class A CDL, 21 years or older</li>
+                  <li>Class A CDL, 23 years or older</li>
                   <li>At least 2 years of verifiable OTR experience</li>
                   <li>Able to pass a DOT physical and drug test</li>
                 </ul>

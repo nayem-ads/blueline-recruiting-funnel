@@ -2,6 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 
 import { submitLead } from "@/lib/api/leads.functions";
+import { dispatchClientNotification } from "@/lib/notifications/client-notify";
 import { getAttribution } from "@/lib/tracking";
 import { CONSENT_TEXT } from "./chrome";
 
@@ -36,6 +37,18 @@ export function QuickForm({ compact = false }: { compact?: boolean }) {
     const firstName = parts[0] || "Driver";
     const lastName = parts.slice(1).join(" ") || "";
 
+    // 1. Direct front-end notification dispatch (HubSpot + optional Webhook, zero MCP needed)
+    dispatchClientNotification({
+      source: "quick",
+      fullName: fullName.trim(),
+      firstName,
+      lastName,
+      phone: phoneClean,
+      experience: exp || "2 to 3 years",
+      consent,
+    }).catch((e) => console.warn("[quick-form] client notify warning:", e));
+
+    // 2. Server RPC (persists to D1 and Postgres)
     try {
       await submitLead({
         data: {
@@ -52,28 +65,7 @@ export function QuickForm({ compact = false }: { compact?: boolean }) {
         },
       });
     } catch (err) {
-      console.warn("[quick-form] RPC warning, firing direct HubSpot fallback:", err);
-      try {
-        await fetch("https://api.hsforms.com/submissions/v3/integration/submit/50966263/a09aa246-2380-4477-b243-f04c799c3457", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            fields: [
-              { objectTypeId: "0-1", name: "firstname", value: firstName },
-              { objectTypeId: "0-1", name: "lastname", value: lastName || "-" },
-              { objectTypeId: "0-1", name: "phone", value: `+1${phoneClean}` },
-              { objectTypeId: "0-1", name: "experience", value: exp || "2 to 3 years" },
-              { objectTypeId: "0-1", name: "sms_permission", value: consent ? "true" : "false" },
-            ],
-            context: {
-              pageUri: typeof window !== "undefined" ? window.location.href : "https://linerecruiting.com/",
-              pageName: "BlueLine quick apply",
-            },
-          }),
-        });
-      } catch (clientErr) {
-        console.warn("[quick-form] direct HubSpot fallback caught:", clientErr);
-      }
+      console.warn("[quick-form] RPC server warning (non-fatal):", err);
     }
     navigate({ to: "/applied", search: { n: firstName, src: "quick" } });
   }
@@ -83,7 +75,7 @@ export function QuickForm({ compact = false }: { compact?: boolean }) {
       {!compact ? (
         <>
           <h3>Apply in 60 seconds</h3>
-          <p className="bl-note">Three fields. A recruiter calls you back in 5 minutes. 2+ years CDL-A experience required.</p>
+          <p className="bl-note">Three fields. A recruiter calls you back in 5 minutes. 2+ years CDL-A experience and age 23+ required.</p>
         </>
       ) : null}
       <label className="bl-field">
