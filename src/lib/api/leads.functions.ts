@@ -39,6 +39,9 @@ export const leadSchema = z.object({
   utm_term: z.string().optional().default(""),
   fbclid: z.string().optional().default(""),
   page_uri: z.string().optional().default(""),
+  landing_path: z.string().optional().default(""),
+  schedule: z.string().optional().default(""),
+  qualified: z.boolean().optional().default(true),
   website: z.string().optional().default(""), // honeypot
 });
 export type LeadInput = z.infer<typeof leadSchema>;
@@ -53,6 +56,8 @@ function hubspotFields(d: LeadInput, tier: "full" | "standard" | "minimal"): HsF
   const lastName = nameParts.slice(1).join(" ") || d.last_name || "-";
 
   const notes = [
+    d.schedule && `Schedule: ${d.schedule}`,
+    d.qualified !== undefined && `Qualified: ${d.qualified}`,
     d.lane && `Looking for: ${d.lane}`,
     d.experience && `CDL-A experience: ${d.experience}`,
     d.zip && `ZIP Code: ${d.zip}`,
@@ -179,6 +184,8 @@ export const submitLead = createServerFn({ method: "POST" })
       const email = data.email || (data.phone ? `${data.phone}@no-email.linerecruiting.com` : `lead_${Date.now()}@no-email.linerecruiting.com`);
       const company = data.lane || null;
       const message = [
+        data.schedule && `Schedule: ${data.schedule}`,
+        data.qualified !== undefined && `Qualified: ${data.qualified}`,
         data.experience && `CDL-A experience: ${data.experience}`,
         data.zip && `ZIP: ${data.zip}`,
         data.home_time && `Home time: ${data.home_time}`,

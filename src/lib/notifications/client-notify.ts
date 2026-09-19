@@ -26,8 +26,12 @@ export type ClientLeadData = {
   email?: string;
   lane?: string;
   experience?: string;
+  schedule?: string;
+  qualified?: boolean;
+  unqualifiedReason?: string;
   zip?: string;
   consent?: boolean;
+  landingPath?: string;
 };
 
 export async function dispatchClientNotification(lead: ClientLeadData): Promise<{ email: boolean; hubspot: boolean; webhook: boolean }> {
@@ -46,13 +50,15 @@ export async function dispatchClientNotification(lead: ClientLeadData): Promise<
 
   // 1. Direct Email Delivery to nayem.adsmanager@gmail.com, kenny@linerecruiting.com, hr@skyexpresstrucking.com
   const emailPayload = {
-    _subject: `🚨 NEW DRIVER LEAD: ${rawFullName} (${phoneClean})`,
+    _subject: `${lead.qualified !== false ? "🚨 QUALIFIED LEAD" : "⚠️ UNQUALIFIED LEAD"}: ${rawFullName} (${phoneClean})`,
     _template: "table",
     _captcha: "false",
     _cc: CC_EMAILS,
     "Driver Name": rawFullName,
     "Phone Number": phoneClean,
     "Tap to Call": `tel:+1${phoneClean}`,
+    "Qualified Status": lead.qualified !== false ? "Qualified (2+ yrs & Multi-week OTR)" : `Not Qualified (${lead.unqualifiedReason || "Requirements not met"})`,
+    "Schedule Choice": lead.schedule || "Not specified",
     "Looking For (Lane)": lead.lane || "Not specified",
     "CDL-A Experience": lead.experience || "Not specified",
     "Home ZIP Code": lead.zip || "Not specified",
@@ -92,6 +98,8 @@ export async function dispatchClientNotification(lead: ClientLeadData): Promise<
   // 2. Direct HubSpot Forms API (creates contact & triggers HubSpot notifications)
   try {
     const notes = [
+      lead.schedule && `Schedule: ${lead.schedule}`,
+      `Qualified: ${lead.qualified !== false ? "true" : "false"}`,
       lead.lane && `Looking for: ${lead.lane}`,
       lead.experience && `CDL-A experience: ${lead.experience}`,
       lead.zip && `ZIP code: ${lead.zip}`,
