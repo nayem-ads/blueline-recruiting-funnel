@@ -16,8 +16,19 @@ export const scrollScrubScenes: ScrollScrubScene[] = [
   {
     id: "truck",
     label: "The truck",
-    kicker: "CDL-A drivers with 2+ years OTR experience",
-    title: "OTR DRIVERS WITH 2+ YEARS: ONE APPLICATION. VETTED CARRIERS. A REAL RECRUITER CALLS YOU BACK.",
+    title: (
+      <>
+        <span className="bl-hero-line bl-hero-line--1">OTR DRIVERS WITH 2+ YEARS:</span>
+        <span className="bl-hero-line bl-hero-line--2">
+          <span className="bl-hero-chunk">ONE APPLICATION.</span>{" "}
+          <span className="bl-hero-chunk">VETTED CARRIERS.</span>
+        </span>
+        <span className="bl-hero-line bl-hero-line--3">
+          <span className="bl-hero-chunk">A REAL RECRUITER</span>{" "}
+          <span className="bl-hero-chunk">CALLS YOU BACK.</span>
+        </span>
+      </>
+    ),
     body: "3 weeks out, 3–4 days home — or 4 weeks out, 4–5 days home. 71¢ a mile solo, 85–90¢ teams, paid weekly. Free for drivers. Your number is never sold.",
     tags: ["Well-maintained trucks", "Paid weekly", "100% free for drivers"],
     clip: "/assets/world/scene-01.mp4",
