@@ -39,7 +39,7 @@ const scenes = scrollScrubScenes.map((s, i) =>
 const FAQ = [
   ["Is it really free?", "Yes. Carriers pay BlueLine a placement fee when you start. You never pay anything, and nothing comes out of your pay."],
   ["How fast will someone actually call?", "Within 5 minutes during working hours, from a (816) number. Apply overnight and you hear from us first thing in the morning. If you can't talk, text us and we work around your schedule."],
-  ["What experience do I need?", "A Class A CDL and at least 2 years of verifiable OTR experience, with a clean enough record to pass our carriers' review (see the requirements above). Under 2 years? Call us and we tell you exactly when you will qualify."],
+  ["What experience do I need?", "A Class A CDL and at least 2 years of verifiable OTR experience, with a clean enough record to pass our carriers' review (see the requirements above). Under 2 years? Our carriers require 2+ years of verifiable OTR. Come back at 24 months — we'll be here."],
   ["What is the pay, really?", "Solo company drivers earn 71 cents a mile. Teams earn 85 to 90 cents a mile for the truck. Lease programs pay differently. You hear the exact number for what you qualify for on the call, not a range on a website."],
   ["Who sees my number?", "Only your BlueLine recruiter. We do not sell or share leads, so you will not get calls from companies you never picked."],
   ["What about home time?", "It is the first thing we ask, before pay. Carriers that cannot meet your home time never see your application."],

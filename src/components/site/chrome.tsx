@@ -6,8 +6,9 @@ export const PHONE_TEL = "tel:+18162568329";
 export const SMS_HREF =
   "sms:+18162568329?&body=" +
   encodeURIComponent("Hey BlueLine, I'm looking for a CDL job. My name is ");
+// consent default state pending compliance review
 export const CONSENT_TEXT =
-  "I agree to receive calls and texts from BlueLine Recruiting at the number provided, including by automated means, about CDL job opportunities. Consent is not a condition of any purchase. Msg and data rates may apply. Reply STOP to opt out.";
+  "I agree to receive calls and texts from BlueLine Recruiting at the number provided, including by automated means, about CDL job opportunities. Consent is not a condition of any purchase. Msg and data rates may apply. Reply STOP to opt out. I confirm I'm 23 or older with 2+ years of verifiable OTR experience.";
 
 export function IconPhone() {
   return (

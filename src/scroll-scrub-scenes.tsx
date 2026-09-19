@@ -17,16 +17,8 @@ export const scrollScrubScenes: ScrollScrubScene[] = [
     id: "truck",
     label: "The truck",
     kicker: "CDL-A drivers with 2+ years OTR experience",
-    title: (
-      <>
-        <span className="bl-hl">71¢</span> A MILE SOLO.
-        <br />
-        <span className="bl-hl">85 TO 90¢</span> TEAMS.
-        <br />
-        HOME WHEN YOU SAY.
-      </>
-    ),
-    body: "Tell us what you want out of your next job once. We put it in front of carriers that fit, and a real recruiter calls you back in 5 minutes.",
+    title: "OTR DRIVERS WITH 2+ YEARS: ONE APPLICATION. VETTED CARRIERS. A REAL RECRUITER CALLS YOU BACK.",
+    body: "3 weeks out, 3–4 days home — or 4 weeks out, 4–5 days home. 71¢ a mile solo, 85–90¢ teams, paid weekly. Free for drivers. Your number is never sold.",
     tags: ["Well-maintained trucks", "Paid weekly", "100% free for drivers"],
     clip: "/assets/world/scene-01.mp4",
     poster: "/assets/world/scene-01-poster.jpg",
