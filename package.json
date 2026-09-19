@@ -12,7 +12,7 @@
     "build": "node scripts/check-ui.mjs && tsr generate && vite build",
     "build:dev": "vite build --mode development",
     "build:cf": "CF_WORKER=1 bun run build",
-    "start": "vite dev --host 0.0.0.0 --port ${PORT:-3000}",
+    "start": "vite preview --host 0.0.0.0 --port ${PORT:-3000}",
     "preview": "vite preview --host 0.0.0.0 --port ${PORT:-3000}",
     "postinstall": "node scripts/verify-install.mjs",
     "lint": "eslint .",
