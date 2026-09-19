@@ -1,4 +1,4 @@
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 
 import { ScrollScrub } from "@/components/scroll-scrub/scroll-scrub";
@@ -13,9 +13,9 @@ export const Route = createFileRoute("/")({
 
 const heroActions = (
   <>
-    <Link to="/apply" className="bl-cta-primary">
+    <a href="#apply" className="bl-cta-primary">
       See if I qualify <IconArrow />
-    </Link>
+    </a>
     <a href={PHONE_TEL} className="bl-cta-call" data-track="click_call">
       <IconPhone /> Call {PHONE_DISPLAY}
     </a>
@@ -23,9 +23,9 @@ const heroActions = (
 );
 const recruiterActions = (
   <>
-    <Link to="/apply" className="bl-cta-primary">
+    <a href="#apply" className="bl-cta-primary">
       See if I qualify <IconArrow />
-    </Link>
+    </a>
     <a href={PHONE_TEL} className="bl-cta-call" data-track="click_call">
       <IconPhone /> Call {PHONE_DISPLAY}
     </a>
@@ -89,7 +89,7 @@ function Index() {
             <h2 className="bl-h2">Pick the lane you want</h2>
             <p className="bl-lead">Pick one and we start the application with that in mind. Not sure? Pick the closest and your recruiter sorts it out on the call.</p>
             <div className="bl-lanes">
-              <Link to="/apply" search={{ lane: "Company OTR" }} className="bl-lane">
+              <a href="#apply" className="bl-lane">
                 <h3>Company OTR</h3>
                 <p>Solo OTR on well-maintained equipment.</p>
                 <ul>
@@ -99,8 +99,8 @@ function Index() {
                   <li><strong className="bl-hl">2+ years</strong> OTR experience</li>
                 </ul>
                 <span className="bl-lane__go">Start here <IconArrow /></span>
-              </Link>
-              <Link to="/apply" search={{ lane: "Team" }} className="bl-lane">
+              </a>
+              <a href="#apply" className="bl-lane">
                 <h3>Team</h3>
                 <p>Run with a partner, keep the truck moving.</p>
                 <ul>
@@ -109,8 +109,8 @@ function Index() {
                   <li>Bring your co-driver or get matched</li>
                 </ul>
                 <span className="bl-lane__go">Start here <IconArrow /></span>
-              </Link>
-              <Link to="/apply" search={{ lane: "Lease purchase" }} className="bl-lane">
+              </a>
+              <a href="#apply" className="bl-lane">
                 <h3>Lease purchase</h3>
                 <p>For drivers who want more control.</p>
                 <ul>
@@ -119,7 +119,7 @@ function Index() {
                   <li>Best fit for 2+ years experience</li>
                 </ul>
                 <span className="bl-lane__go">Start here <IconArrow /></span>
-              </Link>
+              </a>
             </div>
           </div>
         </section>
@@ -225,7 +225,7 @@ function Index() {
             <h2 className="bl-h2">Ready when you are. So is the truck.</h2>
             <p className="bl-lead">Apply once. A real recruiter calls in 5 minutes. If we cannot beat what you have, we tell you.</p>
             <div className="bl-final__row">
-              <Link to="/apply" className="bl-cta-primary">See if I qualify <IconArrow /></Link>
+              <a href="#apply" className="bl-cta-primary">See if I qualify <IconArrow /></a>
               <a href={PHONE_TEL} className="bl-cta-call" data-track="click_call"><IconPhone /> Call {PHONE_DISPLAY}</a>
             </div>
           </div>

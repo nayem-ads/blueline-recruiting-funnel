@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as ApplyRouteImport } from './routes/apply'
+import { Route as AppliedNotYetRouteImport } from './routes/applied-notyet'
 import { Route as AppliedRouteImport } from './routes/applied'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
@@ -29,6 +30,11 @@ const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
 const ApplyRoute = ApplyRouteImport.update({
   id: '/apply',
   path: '/apply',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppliedNotYetRoute = AppliedNotYetRouteImport.update({
+  id: '/applied-notyet',
+  path: '/applied-notyet',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppliedRoute = AppliedRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRoute
   '/applied': typeof AppliedRoute
+  '/applied-notyet': typeof AppliedNotYetRoute
   '/apply': typeof ApplyRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/app': typeof AppRoute
   '/applied': typeof AppliedRoute
+  '/applied-notyet': typeof AppliedNotYetRoute
   '/apply': typeof ApplyRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -68,6 +76,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/app': typeof AppRoute
   '/applied': typeof AppliedRoute
+  '/applied-notyet': typeof AppliedNotYetRoute
   '/apply': typeof ApplyRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -75,14 +84,28 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/app' | '/applied' | '/apply' | '/robots.txt' | '/sitemap.xml'
+    | '/'
+    | '/app'
+    | '/applied'
+    | '/applied-notyet'
+    | '/apply'
+    | '/robots.txt'
+    | '/sitemap.xml'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/app' | '/applied' | '/apply' | '/robots.txt' | '/sitemap.xml'
+  to:
+    | '/'
+    | '/app'
+    | '/applied'
+    | '/applied-notyet'
+    | '/apply'
+    | '/robots.txt'
+    | '/sitemap.xml'
   id:
     | '__root__'
     | '/'
     | '/app'
     | '/applied'
+    | '/applied-notyet'
     | '/apply'
     | '/robots.txt'
     | '/sitemap.xml'
@@ -92,6 +115,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRoute
   AppliedRoute: typeof AppliedRoute
+  AppliedNotYetRoute: typeof AppliedNotYetRoute
   ApplyRoute: typeof ApplyRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -118,6 +142,13 @@ declare module '@tanstack/react-router' {
       path: '/apply'
       fullPath: '/apply'
       preLoaderRoute: typeof ApplyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/applied-notyet': {
+      id: '/applied-notyet'
+      path: '/applied-notyet'
+      fullPath: '/applied-notyet'
+      preLoaderRoute: typeof AppliedNotYetRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/applied': {
@@ -148,6 +179,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRoute,
   AppliedRoute: AppliedRoute,
+  AppliedNotYetRoute: AppliedNotYetRoute,
   ApplyRoute: ApplyRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,

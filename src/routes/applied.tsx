@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 
 import { Footer, Header, IconCheck, IconPhone, IconText, PHONE_DISPLAY, PHONE_TEL, SMS_HREF } from "@/components/site/chrome";
-import { bindContactClicks, track } from "@/lib/tracking";
+import { bindContactClicks, trackLeadOnce } from "@/lib/tracking";
 
 type Search = { n?: string; src?: string };
 
@@ -23,9 +23,8 @@ export const Route = createFileRoute("/applied")({
 function Applied() {
   const { n, src } = Route.useSearch();
   useEffect(() => {
-    // Conversion boundary: the pixel Lead event also fires here so a direct
-    // visit to /applied after a HubSpot or offline submit still counts.
-    track("Lead", { source: src ?? "direct", page: "applied" });
+    // Conversion boundary: the pixel Lead event fires exactly once per submit
+    trackLeadOnce({ source: src ?? "direct", page: "applied" });
     return bindContactClicks();
   }, [src]);
   const name = n ? `${n}, you` : "You";

@@ -16,7 +16,7 @@
   --bl-bar: 64px;
 }
 html {
-  scroll-behavior: auto;
+  scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
   overflow-x: clip;
   max-width: 100%;
