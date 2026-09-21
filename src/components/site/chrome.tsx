@@ -60,9 +60,9 @@ export function Header({ cta = true }: { cta?: boolean }) {
             <span>{PHONE_DISPLAY}</span>
           </a>
           {cta ? (
-            <a href="#apply" className="bl-cta-primary" style={{ minHeight: 44, padding: "0 1.1rem", fontSize: "0.98rem" }}>
+            <Link to="/apply" className="bl-cta-primary" style={{ minHeight: 44, padding: "0 1.1rem", fontSize: "0.98rem" }}>
               Get Offer
-            </a>
+            </Link>
           ) : null}
         </div>
       </div>
@@ -74,7 +74,7 @@ export function StickyBar() {
   return (
     <nav className="bl-sticky" aria-label="Quick actions">
       <a href={PHONE_TEL} data-track="click_call"><IconPhone />Call ({PHONE_DISPLAY.slice(1, 4)})</a>
-      <a href="#apply" className="is-primary">Get Offer<IconArrow /></a>
+      <Link to="/apply" className="is-primary">Get Offer<IconArrow /></Link>
     </nav>
   );
 }

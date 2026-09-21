@@ -18,15 +18,11 @@ export const scrollScrubScenes: ScrollScrubScene[] = [
     label: "The truck",
     title: (
       <>
-        <span className="bl-hero-line bl-hero-line--1">OTR DRIVERS WITH 2+ YEARS:</span>
-        <span className="bl-hero-line bl-hero-line--2">
-          <span className="bl-hero-chunk">ONE APPLICATION.</span>{" "}
-          <span className="bl-hero-chunk">VETTED CARRIERS.</span>
-        </span>
-        <span className="bl-hero-line bl-hero-line--3">
-          <span className="bl-hero-chunk">A REAL RECRUITER</span>{" "}
-          <span className="bl-hero-chunk">CALLS YOU BACK.</span>
-        </span>
+        OTR DRIVERS WITH <span className="bl-hl">2+ YEARS</span>:
+        <br />
+        <span className="bl-hl">ONE APPLICATION</span>. VETTED CARRIERS.
+        <br />
+        A REAL RECRUITER CALLS YOU BACK.
       </>
     ),
     body: "3 weeks out, 3–4 days home — or 4 weeks out, 4–5 days home. 71¢ a mile solo, 85–90¢ teams, paid weekly. Free for drivers. Your number is never sold.",
